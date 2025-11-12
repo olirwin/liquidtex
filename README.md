@@ -1,28 +1,35 @@
------------------------------------------------------------------------
+| liquidtex: | LaTeX with integrated Liquid templating                        |
+|------------|----------------------------------------------------------------|
+| Author:    | Oliver Irwin                                                   |
+| E-mail:    | oliver@irwin.sh                                                |
+| License:   | Released under the LaTeX Project Public License v1.3c or later |
+| See:       | http://www.latex-project.org/lppl.txt                          |
 
-- `liquidtex` --- LaTeX with integrated Liquid, version 0.0.1
-- E-mail: `oliver@irwin.sh`
-- Released under the LaTeX Project Public License v1.3c or later. See
-  http://www.latex-project.org/lppl.txt
+Running `make` generates the derived files README, liquidtex.pdf and liquidtex.sty.
+Running `make inst` installs the files in the user's TeX tree.
+Running `make install` installs the files in the local TeX tree.
 
------------------------------------------------------------------------
+# liquidtex
 
-**The `liquidtex` bundle provides a LaTeX package file to help writing
-LaTeX files with integrated Liquid templates.**
+`liquidtex` is a LaTeX package that integrates **Liquid templates**
+directly into the LaTeX compilation process. It allows you to write LaTeX
+documents that include dynamic placeholders and conditional logic, rendered
+automatically from structured data sources (e.g. YAML, JSON) at compile
+time.
 
-The package is supplied in `.dtx` format. If you want to unpack the `.dtx`
-yourself, running:
+## Features
 
-    pdftex liquidtex.dtx
+- Seamless integration of **Liquid templating** within LaTeX documents.
+- Support for **YAML** and **JSON** data sources.
+- Verbose **logging** and **error reporting** for debugging template
+  rendering.
+- Configurable **options** for data source paths, compilation behaviour,
+  and output verbosity.
+- Compatible with `.sty` or `.dtx` distribution formats.
 
-will extract the package whereas:
+## Use Cases
 
-    pdflatex liquidtex.dtx
-
-will extract it and also typeset the documentation of the code.
-
-Typesetting the documentation of the package requires:
-
-- a number of packages in addition to those needed to use the `liquidtex`
-   classes.  To compile the documentation without error, you will need, among
-   others, the `denisbdoc` package for documentation.
+- Auto-generated CVs or reports based on structured data.
+- Dynamic lecture notes, syllabi, or publication lists.
+- Research documents where repetitive elements are driven by metadata.
+\NewDocumentCommand{\hello}{ O{World} }{Hello, #1!}

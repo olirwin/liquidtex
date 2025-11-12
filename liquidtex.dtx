@@ -1,0 +1,517 @@
+% \iffalse meta-comment
+% vim: textwidth=75
+% Copyright (C) 2025 by Oliver Irwin <oliver@irwin.sh>
+% -------------------------------------------------------------------------
+% This work may be distributed and/or modified under the
+% conditions of the LaTeX Project Public License (LPPL), either
+% version 1.3c of this license or (at your option) any later
+% version.  The latest version of this license is in the file:
+%
+% http://www.latex-project.org/lppl.txt
+%
+% This work is "maintained" (as per LPPL maintenance status) by
+% Oliver Irwin.
+%
+% This work consists of the file liquidtex.dtx, a Makefile, and the derived
+% filebase liquidtex.sty.
+%
+%<*internal>
+\iffalse
+%</internal>
+%<*readme>
+| liquidtex: | LaTeX with integrated Liquid templating                        |
+|------------|----------------------------------------------------------------|
+| Author:    | Oliver Irwin                                                   |
+| E-mail:    | oliver@irwin.sh                                                |
+| License:   | Released under the LaTeX Project Public License v1.3c or later |
+| See:       | http://www.latex-project.org/lppl.txt                          |
+
+Running `make` generates the derived files README, liquidtex.pdf and liquidtex.sty.
+Running `make inst` installs the files in the user's TeX tree.
+Running `make install` installs the files in the local TeX tree.
+
+# liquidtex
+
+`liquidtex` is a LaTeX package that integrates **Liquid templates**
+directly into the LaTeX compilation process. It allows you to write LaTeX
+documents that include dynamic placeholders and conditional logic, rendered
+automatically from structured data sources (e.g. YAML, JSON) at compile
+time.
+
+## Features
+
+- Seamless integration of **Liquid templating** within LaTeX documents.
+- Support for **YAML** and **JSON** data sources.
+- Verbose **logging** and **error reporting** for debugging template
+  rendering.
+- Configurable **options** for data source paths, compilation behaviour,
+  and output verbosity.
+- Compatible with `.sty` or `.dtx` distribution formats.
+
+## Use Cases
+
+- Auto-generated CVs or reports based on structured data.
+- Dynamic lecture notes, syllabi, or publication lists.
+- Research documents where repetitive elements are driven by metadata.
+%</readme>
+%<*ctanomat>
+% This is a description file for ctan-o-mat.
+% It manages uploads of a package to
+% CTAN -- the Comprehensive TeX Archive Network.
+%
+% The syntax is roughly oriented towards (La)TeX.
+% Two form of the macros are used. The simple macros take one argument
+% in braces. Here the argument may not contain embedded macros.
+%
+% The second form uses an environment enclosed in \begin{}/\end{}.
+% In the long text fields logo macros can be used.
+%
+% You should enter your values between the begin and the end of the
+% named type.
+% -------------------------------------------------------------------------
+% This field contains the CTAN id of the package.
+% The value is optional.
+% The value is restricted to 32 characters.
+\pkg{liquidtex}
+% -------------------------------------------------------------------------
+% This field contains the version of the package.
+% The value is optional.
+% The value is restricted to 32 characters.
+\version{0.0.1 2025-11-11}
+% -------------------------------------------------------------------------
+% This field contains the name of the author(s).
+% The value is optional.
+% The value is restricted to 128 characters.
+\author{Oliver Irwin}
+% -------------------------------------------------------------------------
+% This field contains the email address of the uploader.
+% The value is an email address.
+% The value is restricted to 255 characters.
+\email{oliver@irwin.sh}
+% -------------------------------------------------------------------------
+% This field contains the name of the uploader.
+% The value is restricted to 255 characters.
+\uploader{Oliver Irwin}
+% -------------------------------------------------------------------------
+% This field contains the directory on CTAN.
+% The value is optional.
+% The value is restricted to 255 characters.
+%\ctanPath{}
+% -------------------------------------------------------------------------
+% This field contains the license.
+% The value is optional.
+% The value is restricted to 2048 characters.
+% Multiple values are allowed.
+\license{lppl1.3c}
+% -------------------------------------------------------------------------
+% This field contains the URL of the home page.
+% The value is optional.
+% The value is a URL.
+% The value is restricted to 255 characters.
+% Multiple values are allowed.
+\home{}
+% -------------------------------------------------------------------------
+% This field contains the URL of the bug tracker.
+% The value is optional.
+% The value is a URL.
+% The value is restricted to 255 characters.
+% Multiple values are allowed.
+\bugtracker{https://github.com/olirwin/liquidtex/issues/}
+% -------------------------------------------------------------------------
+% This field contains the support channel.
+% The value is optional.
+% The value is a URL.
+% The value is restricted to 255 characters.
+% Multiple values are allowed.
+\support{}
+% -------------------------------------------------------------------------
+% This field contains the version management.
+% The value is optional.
+% The value is a URL.
+% The value is restricted to 255 characters.
+% Multiple values are allowed.
+\repository{https://github.com/olirwin/liquidtex}
+% -------------------------------------------------------------------------
+% This field contains the developer's channel.
+% The value is optional.
+% The value is a URL.
+% The value is restricted to 255 characters.
+% Multiple values are allowed.
+\development{}
+% -------------------------------------------------------------------------
+% This field contains the update indicator; true for update.
+% The value is optional.
+% The value is restricted to 8 characters.
+\update{false}
+% -------------------------------------------------------------------------
+% This field contains the topics id.
+% The value is optional.
+% The value is restricted to 1024 characters.
+% Multiple values are allowed.
+\topic{}
+% -------------------------------------------------------------------------
+% This field contains the text for the mail announcement.
+% The value is optional.
+% The value is restricted to 8192 characters.
+\begin{announcement}
+\end{announcement}
+% -------------------------------------------------------------------------
+% This field contains the one-liner for the package.
+% The value is optional.
+% The value is restricted to 128 characters.
+\summary{A LaTeX package to use integrated Liquid templates in documents}
+% -------------------------------------------------------------------------
+% This field contains the descriptive abstract for the package.
+% The value is optional.
+% The value is restricted to 4096 characters.
+\begin{description}
+# liquidtex
+
+`liquidtex` is a LaTeX package that integrates **Liquid templates**
+directly into the LaTeX compilation process. It allows you to write LaTeX
+documents that include dynamic placeholders and conditional logic, rendered
+automatically from structured data sources (e.g. YAML, JSON) at compile
+time.
+
+## Features
+
+- Seamless integration of **Liquid templating** within LaTeX documents.
+- Support for **YAML** and **JSON** data sources.
+- Verbose **logging** and **error reporting** for debugging template
+  rendering.
+- Configurable **options** for data source paths, compilation behaviour,
+  and output verbosity.
+- Compatible with `.sty` or `.dtx` distribution formats.
+
+## Use Cases
+
+- Auto-generated CVs or reports based on structured data.
+- Dynamic lecture notes, syllabi, or publication lists.
+- Research documents where repetitive elements are driven by metadata.
+\end{description}
+% -------------------------------------------------------------------------
+% This field contains the note to the CTAN upload managers.
+% The value is optional.
+% The value is restricted to 2048 characters.
+\begin{note}
+\end{note}
+% -------------------------------------------------------------------------
+% This field contains the archive file.
+% The value is the file name of the archive to be uploaded.
+% It may have a relative or absolute directory.
+\file{../dtx-forge/liquidtex.zip}
+%</ctanomat>
+%<*changelog>
+%</changelog>
+%
+%<*internal>
+\fi
+\def\nameofplainTeX{plain}
+\ifx\fmtname\nameofplainTeX\else
+  \expandafter\begingroup
+\fi
+%</internal>
+%<*package|install>
+\def\liquidtexversion{0.0.1}
+\def\liquidtexdate{2025-11-12}
+%</package|install>
+%<*install>
+\input l3docstrip.tex
+\Msg{********************************************************}
+\Msg{* Installation}
+\Msg{* Package: liquidtex \liquidtexdate\space v\liquidtexversion}
+\Msg{* that allows for integrated Liquid templating in documents}
+\Msg{********************************************************}
+\keepsilent
+\askforoverwritefalse
+\preamble
+---------:| ---------------------------------------------------------------
+liquidtex:| LaTeX with integrated Liquid templating
+   Author:| Oliver Irwin
+   E-mail:| oliver@irwin.sh
+  License:| Released under the LaTeX Project Public License v1.3c or later
+      See:| http://www.latex-project.org/lppl.txt
+
+\endpreamble
+\postamble
+
+Copyright (C) 2025 by Oliver Irwin <oliver@irwin.sh>
+
+This work may be distributed and/or modified under the
+conditions of the LaTeX Project Public License (LPPL), either
+version 1.3c of this license or (at your option) any later
+version.  The latest version of this license is in the file:
+
+http://www.latex-project.org/lppl.txt
+
+This work is "maintained" (as per LPPL maintenance status) by
+Oliver Irwin.
+
+This work consists of the file liquidtex.dtx and a Makefile.
+Running "make" generates the derived files README, liquidtex.pdf and liquidtex.sty.
+Running "make inst" installs the files in the user's TeX tree.
+Running "make install" installs the files in the local TeX tree.
+
+\endpostamble
+
+%\usedir{tex/latex/liquidtex}
+\def\LQT@pkgname{\jobname}
+\def\LQT@packagename{\LQT@pkgname doc}
+%</install>
+%<*install>
+%\usedir{source/latex/liquidtex}
+\usedir{.}
+\generate{
+  \nopreamble\nopostamble
+  \file{\LQT@pkgname.pkg}{\from{\jobname.dtx}{ctanomat}}
+}%
+\usedir{doc/latex/\LQT@pkgname}
+\generate{
+  \nopreamble\nopostamble
+  \file{README.md}{\from{\jobname.dtx}{readme}}
+}%
+\generate{
+  \nopreamble\nopostamble
+  \file{CHANGELOG.md}{\from{\jobname.dtx}{changelog}}
+}%
+\usedir{tex/latex/\LQT@pkgname}
+\generate{
+  \file{\jobname.sty}{\from{\jobname.dtx}{package}}
+}
+%</install>
+%<install>\endbatchfile
+%<*internal>
+\usedir{source/latex/\LQT@pkgname}
+\generate{
+  \file{\LQT@pkgname.ins}{\from{\jobname.dtx}{install}}
+  \file{\LQT@pkgname.drv}{\from{\jobname.dtx}{driver}}%
+}%
+\ifx\fmtname\nameofplainTeX
+  \expandafter\endbatchfile
+\else
+  \expandafter\endgroup
+\fi
+%</internal>
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{liquidtex.dtx}
+%</driver>
+%<*driver>
+\documentclass[full,british,draft]{l3doc}
+\usepackage[a4paper,margin=25mm,left=50mm,nohead]{geometry}
+\usepackage[yad]{denisbdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\begin{document}
+  \DocInput{\jobname.dtx}
+\end{document}
+%</driver>
+% \fi
+% \CheckSum{4290}
+%
+% \CharacterTable
+%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%   Digits        \0\1\2\3\4\5\6\7\8\9
+%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%   Dollar        \$     Percent       \%     Ampersand     \&
+%   Acute accent  \'     Left paren    \(     Right paren   \)
+%   Asterisk      \*     Plus          \+     Comma         \,
+%   Minus         \-     Point         \.     Solidus       \/
+%   Colon         \:     Semicolon     \;     Less than     \<
+%   Equals        \=     Greater than  \>     Question mark \?
+%   Commercial at \@     Left bracket  \[     Backslash     \\
+%   Right bracket \]     Circumflex    \^     Underscore    \_
+%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%   Right brace   \}     Tilde         \~}
+%
+%
+%   \GetFileInfo{\jobname.dtx}
+%   \DoNotIndex{%
+%   \newcommand,\newenvironment,\begin,\end,\acrpluralsuffix,\acrshort,\active,\addlinespace,\advance,\AtEndDocument,\begingroup,\caption,\catcode,\ClassInfo,\color,\colorlet,\cr,\DeclareGraphicsExtensions,\declaretheorem,\declaretheoremstyle,\def,\definecolor,\do,\edef,\else,\emph,\endgroup,\endVerbatimOut,\expandafter,\fi,\floatsetup,\footnotesize,\gls,\glsentrylong,\glspluralsuffix,\glsshorttok,\graphicspath,\hide,\ifluatex,\includegraphics,\InputIfFileExists,\intertitle,\killienc,\label,\LaTeX,\linewidth,\LoadClass,\loadglsentries,\lstinputlisting,\lstMakeShortInline,\lstset,\LTXtable,\makeglossaries,\mdfdefinestyle,\mdfsetup,\medskipamount,\meta,\multicolumn,\noexpand,\normalfont,\nothing,\PassOptionsToClass,\PassOptionsToPackage,\ProcessOptions,\protect,\raisebox,\relax,\renewcommand,\RequirePackage,\temp,\TeX,\textbf,\textlangle,\textrangle,\textsc,\textsf,\texttt,\textup,\the,\tmp,\to,\todoformat,\todos,\ttdefault,\ttfamily,\typeout,\uccode,\uppercase,\VerbatimOut,\WithSuffix,\LoadClassWithOptions,\DeclareOption,\xspace,\undefined,\newif,\nothtfalse,\nothttrue,\HCode,\ifnotht,\ifx,\@bsphack}
+%   \DoNotIndex{%
+%   \@documentclasshook,\@empty,\@esphack,\@tempa,\\,\actualchar,\baselineskip,\boolean,\c@CodelineNo,\c@HD@hypercount,\count@,\Describe@Option,\Describe@ShortCut,\encapchar,\endoption,\endshortcut,\endtrivlist,\equal,\fvset,\g@addto@macro,\global,\hbox,\HD@target,\HDorg@encapchar,\hologo,\if@inlabel,\ignorespaces,\index,\input,\item,\leavevmode,\let,\levelchar,\llap,\long,\loop,\Lsmcp,\lstdefinestyle,\lstnewenvironment,\m@cro@YT,\m@ne,\macro@cnt,\MacroTopsep,\makelabel,\MakePrivateLetters,\marginnote,\marginpar,\newboolean,\nobreak,\or,\PackageWarning,\PrintDescribeEnv,\PrintDescribeOption,\PrintDescribeShortCut,\PrintEnvName,\PrintOptionName,\PrintShortCutName,\ProvidesFile,\raggedleft,\repeat,\reversedvideodbend,\saved@macroname,\setboolean,\sffamily,\shortcut,\space,\special@index,\SpecialMainOptionIndex,\SpecialMainShortCutIndex,\SpecialOptionIndex,\SpecialShortCutIndex,\string,\strut,\textbelow,\textsl,\topsep,\trivlist,\VerbatimEnvironment,\vss,\vtop,\xspaceaddexceptions,\par}
+%
+% \DoNotIndex{\@cclvi,\@ne,\@tempcnta,\@whilenum,\toks@,\z@}
+%
+% \DoNotIndex{\addbibresource,\biolinumKeyGlyph,\DeclareRobustCommand,\ClassWarning,\DescribeOption,\DescribeShortCut,\ifcase,\ifnum,\ifthenelse,\option,\pagestyle}
+% \DoNotIndex{\newcommand,\newenvironment}
+%
+% \def\liquidtexversion{0.0.1}
+% \def\liquidtexdate{2025-11-11}
+%
+%\title{\textsf{liquidtex} --- \LaTeX{} with integrated Liquid templating\thanks{This file
+%   describes version \liquidtexversion, last revised \liquidtexdate.}
+%}
+%\author{Oliver Irwin\thanks{E-mail: oliver@irwin.sh}}
+%\date{\liquidtexdate}
+%
+%\maketitle
+%
+% \begin{abstract}
+% \end{abstract}
+% \begin{documentation}
+%
+% \end{documentation}
+% \begin{implementation}
+%
+%^^A Please note that the following implementation is far from being well
+%^^A documented. This may be improved in the future.
+%
+% \section{Option Declaration}
+%
+%    \begin{macrocode}
+%<*package>
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+\ProvidesPackage{\jobname}[\liquidtexdate\space v\liquidtexversion\space LaTeX with integrated Liquid templating]
+%    \end{macrocode}
+%
+% Pour pouvoir disposer d'autant de \enquote{flots} d'écriture dans
+% des fichiers annexes que nécessaire.
+%    \begin{macrocode}
+\ExplSyntaxOn
+\sys_if_engine_pdftex:T {\RequirePackage{morewrites}}
+\ExplSyntaxOff
+%    \end{macrocode}
+% Pour pouvoir définir des macros dont les arguments puissent être
+% spécifiés sous la forme ×clé=×\meta{valeur}, tant en argument de
+% ×\documentclass× que de macros et environnements de la classe.
+%    \begin{macrocode}
+\RequirePackage{pgfopts}[2011/06/02]%
+%    \end{macrocode}
+% Pour disposer d'une boîte à outils de programmation
+%    \begin{macrocode}
+\RequirePackage{etoolbox}[2011/01/03]%
+%    \end{macrocode}
+% Extension de \package{etoolbox} permettant de patcher des
+% commandes à argument(s) optionnel
+%    \begin{macrocode}
+\RequirePackage{xpatch}[2012/10/02]%
+%    \end{macrocode}
+% Assignation ×\let× pour macros à arguments optionnels améliorée
+%    \begin{macrocode}
+\RequirePackage{letltxmacro}[2010/09/02]%
+%    \end{macrocode}
+% Définitions avec deux arguments optionnels
+%    \begin{macrocode}
+\RequirePackage{twoopt}[1999/04/12]%
+%    \end{macrocode}
+% Pour la gestion des tests conditionnels
+%    \begin{macrocode}
+\RequirePackage{xifthen}[2009/04/17]%
+%    \end{macrocode}
+%
+%    \begin{macrocode}
+\newcommand{\LQT@PackageError}{\@ifstar{\@tempswatrue\@LQT@PackageError}{\@tempswafalse\@LQT@PackageError}}
+\newcommand{\@LQT@PackageError}[3][]{}
+%    \end{macrocode}
+% On définit la macro ×\LQT@PackageWarningNoLine× qui est essentiellement
+% identique à ×\PackageWarningNoLine×, sauf que les messages de warnings :
+% \begin{itemize}
+% \item apparaissent en fin de log ;
+% \item sont désactivés si l'une des options est passée.
+% \end{itemize}
+%
+%    \begin{macrocode}
+\newcommand{\LQT@PackageWarningNoLine}[1]{}%
+%    \end{macrocode}
+% On définit le chemin \enquote{lqt} par défaut des clés \enquote{pgf}.
+%    \begin{macrocode}
+\pgfkeys{/lqt/.is family}
+\pgfkeys{/lqt/.cd}
+\def\lqtsetup{\pgfqkeys{/lqt}}
+%    \end{macrocode}
+% On interdit l'utilisation de ×\lqtsetup× ailleurs qu'en préambule.
+%    \begin{macrocode}
+% \@onlypreamble\lqtsetup%
+%    \end{macrocode}
+%    \begin{macrocode}
+\newcommand{\LQT@create@boolean}[1]{%
+  % \yadsetup{#1/.is if = #1}
+  \newbool{LQT@#1}%
+  \lqtsetup{%
+    #1/.is choice,
+    #1/true/.code={%
+      \booltrue{LQT@#1}%
+    },
+    #1/false/.code={%
+      \boolfalse{LQT@#1}%
+    },
+    #1/.default=true,
+  }%
+  % }{%
+  %   \ClassWarningNoLine{yathesis}{%
+  %     Valeur passée à la clé `#1' non valide :\MessageBreak%
+  %     cette valeur ne peut être que `true' ou `false'%
+  %   }%
+  % }%
+}%
+% \LQT@create@boolean{nolink}%
+\LQT@create@boolean{noerror}%
+%
+\lqtsetup{noerror=true}%
+%
+%
+%    \end{macrocode}
+%
+% On crée des \enquote{hooks} permettant de passer, en option de
+% ×\documentclass×, des options aux packages chargés par la classe qui :
+% \begin{enumerate}
+% \item présentent un intérêt en soi pour l'utilisateur final ;
+% \item dont les options peuvent être utiles à l'utilisateur final.
+% \end{enumerate}
+%
+%    \begin{macrocode}
+% \PassOptionsToPackage{a4paper}{geometry}%
+% \PassOptionsToPackage{nodayofweek}{datetime}%
+%    \end{macrocode}
+% On passe au \Package{hyperref} (s'il est chargé par l'utilisteur final) des
+% options qui nous semblent pertinentes.
+%    \begin{macrocode}
+\PassOptionsToPackage{%
+  final,%
+  unicode,%
+  hyperfootnotes=false,%
+  hyperindex=false,%
+  plainpages=false,%
+  breaklinks,%
+  pdfpagemode=UseOutlines,%
+  pdfpagelayout=TwoPageRight%
+}{hyperref}%
+%    \end{macrocode}
+%
+% \section{Option handling}\label{sec:option-handling}
+%
+%    \begin{macrocode}
+%    \end{macrocode}
+%
+% \section{Package Loading}\label{sec:package-loading}
+%
+% Tous les packages suivants sont présents dans les distributions modernes
+% standard \LaTeX.
+%
+% Le \Package{xkeyval} permet aussi de définir des macros dont les arguments
+% puissent être spécifiés sous la forme ×clé=×\meta{valeur} mais ce n'est pas
+% pour cela qu'il est chargé : c'est pour éviter des erreurs qui ont lieu dans
+% certaines circonstances du fait du \Package{keyval} chargé par le
+% \Package{geometry}.
+%    \begin{macrocode}
+\RequirePackage{xkeyval}%
+%    \end{macrocode}
+% Gestion de la géométrie de la page.
+%    \begin{macrocode}
+\RequirePackage{geometry}[2010/09/12]%
+%    \end{macrocode}
+%    \begin{macrocode}
+%</package>
+%    \end{macrocode}
+\NewDocumentCommand{\hello}{ O{World} }{Hello, #1!}
+% \end{implementation}
+\endinput
+

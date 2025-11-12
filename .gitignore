@@ -364,3 +364,10 @@ TSWLatexianTemp*
 
 # End of https://www.toptal.com/developers/gitignore/api/latex,emacs
 
+*.drv
+*.glo2
+*.hd
+*.ins
+*.pdf
+*.pkg
+*.sty
