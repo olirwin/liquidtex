@@ -20,7 +20,7 @@ time.
 ## Features
 
 - Seamless integration of **Liquid templating** within LaTeX documents.
-- Support for **YAML** and **JSON** data sources.
+- Support for **YAML** data sources.
 - Verbose **logging** and **error reporting** for debugging template
   rendering.
 - Configurable **options** for data source paths, compilation behaviour,
@@ -32,4 +32,3 @@ time.
 - Auto-generated CVs or reports based on structured data.
 - Dynamic lecture notes, syllabi, or publication lists.
 - Research documents where repetitive elements are driven by metadata.
-\NewDocumentCommand{\hello}{ O{World} }{Hello, #1!}

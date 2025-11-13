@@ -41,7 +41,7 @@ time.
 ## Features
 
 - Seamless integration of **Liquid templating** within LaTeX documents.
-- Support for **YAML** and **JSON** data sources.
+- Support for **YAML** data sources.
 - Verbose **logging** and **error reporting** for debugging template
   rendering.
 - Configurable **options** for data source paths, compilation behaviour,
@@ -176,7 +176,7 @@ time.
 ## Features
 
 - Seamless integration of **Liquid templating** within LaTeX documents.
-- Support for **YAML** and **JSON** data sources.
+- Support for **YAML** data sources.
 - Verbose **logging** and **error reporting** for debugging template
   rendering.
 - Configurable **options** for data source paths, compilation behaviour,
@@ -352,166 +352,384 @@ Running "make install" installs the files in the local TeX tree.
 %\maketitle
 %
 % \begin{abstract}
+%   The \pkg{liquidtex} package integrates a Liquid-style templating layer
+%   into the \LaTeX{} compilation process. At this stage the package
+%   contains only the minimal scaffolding: an option interface and a
+%   configuration command. Additional functionality will be introduced
+%   incrementally. %
 % \end{abstract}
 % \begin{documentation}
-%
-% \end{documentation}
-% \begin{implementation}
 %
 %^^A Please note that the following implementation is far from being well
 %^^A documented. This may be improved in the future.
 %
-% \section{Option Declaration}
+% \end{documentation}
+%
+% \section{User interface and package options}
+%
+% \begin{documentation}
+%
+% \subsection{Package options}
+%
+% The package defines a key--value interface based on \pkg{l3keys2e}.
+% The same keys are used both as package options and at runtime via
+% \cs{liquidsetup}.
+%
+% Currently defined keys:
+%
+% \begin{description}
+%   \item[\texttt{verbose} (bool)]
+%     Enable verbose logging.\newline
+%     Default value: \texttt{false}.
+%
+%   \item[\texttt{outdir = \meta{path}}]
+%     Directory used to store rendered templates and cache files.
+%     By default this is set to \texttt{.liquid-cache}.  At this
+%     point, the value is only recorded; later versions of the package
+%     will use it to determine where to write cache files.
+%
+%   \item[\texttt{use-auxdir} (bool)]
+%     Controls whether the value of \texttt{outdir} should be interpreted
+%     relative to the compilation auxiliary directory (for example, when
+%     the engine or build tool is invoked with an option such as
+%     \texttt{\string--auxdir} or \texttt{\string-output-directory}).
+%     The default value is \texttt{true}.  When \texttt{use-auxdir} is
+%     set to \texttt{false}, \texttt{outdir} will later be treated as a
+%     path independent of the auxiliary directory.
+%
+%   \item[\texttt{no-cache} (bool)]
+%     Disables cache for temporary files.\newline
+%     Default value: \texttt{false}.
+%   \item[\texttt{engine = lua \textbar{} external}] Selects the backend
+%     used to render Liquid templates.
+%
+%     \begin{description}
+%
+%     \item[lua] Uses a Lua-based renderer. This requires the document to
+%       be compiled with Lua\LaTeX{}.
+%
+%     \item[external] Uses an external program (to be specified later) to
+%       perform template rendering. Shell escape may be required.
+%     \end{description}
+%
+%     This option may only be set in the preamble. Its value is stored
+%     internally and will be used when the first template is processed.
+% \item[\texttt{engine-conf = \meta{key--value list}}]
+% Configures the external engine used when \texttt{engine = external}.
+% The value is a comma-separated list of sub-keys, for example:
+%
+% \begin{verbatim}
+%   engine-conf = {
+%     path           = /usr/bin/liquidtex-cli,
+%     arg-style      = positional,
+%     template-index = 1,
+%     data-index     = 2,
+%     output-index   = 3,
+%   }
+% \end{verbatim}
+%
+% Supported sub-keys are:
+%
+% \begin{description}
+%   \item[\texttt{path = \meta{string}}]
+%     Path to the external engine executable.  This is required when
+%     \texttt{engine = external}.
+%
+%   \item[\texttt{arg-style = positional \textbar{} named}]
+%     Describes how arguments are passed to the engine.  When set to
+%     \texttt{positional}, the indices \texttt{template-index},
+%     \texttt{data-index}, and \texttt{output-index} specify the
+%     positions of the corresponding command-line arguments.
+%
+%   \item[\texttt{template-index}, \texttt{data-index}, \texttt{output-index}]
+%     1-based indices specifying the positions of the template, data,
+%     and output arguments in positional mode.  Defaults are
+%     \texttt{1}, \texttt{2}, and \texttt{3}, respectively.
+% \end{description}
+%
+% This option may only be set in the preamble.
+% When \texttt{engine = external} and no \texttt{path} is provided,
+% the package raises an error at the beginning of the document.
+% \end{description}
+%
+% \subsection{Runtime configuration}
+%
+% \begin{macro}{\liquidsetup}
+% \begin{syntax}
+%   \cs{liquidsetup}\marg{options}
+% \end{syntax}
+% Applies configuration keys at runtime.  For example:
+%
+% \begin{verbatim}
+%   \liquidsetup{
+%     outdir     = .liquid-cache,
+%     use-auxdir = false,
+%     verbose    = true
+%   }
+% \end{verbatim}
+%
+% This command accepts the same keys as the package options processed in
+% the preamble.
+% \end{macro}
+% \subsection{Cache directory management}
+%
+% The package maintains a cache directory where rendered templates and
+% other auxiliary files will be stored. At this stage, only the directory
+% creation is implemented; actual cache contents will be introduced in
+% later versions.
+%
+% The user can disable the use of this cache directory by passing the
+% \texttt{no-cache} option when loading the package or in the preamble.
+%
+% The effective cache directory is determined (for now) solely by the
+% \texttt{outdir} key:
+%
+% \begin{itemize}
+%   \item If \texttt{outdir} is not set explicitly, its default value
+%     \texttt{.liquid-cache} is used.
+%   \item No integration with engine-specific auxiliary directories
+%     (such as those provided by \texttt{\string--auxdir} or similar
+%     command-line options) is performed yet.
+% \end{itemize}
+%
+% At \cs{AtBeginDocument}, the package attempts to create the cache
+% directory using the underlying operating system:
+%
+% \begin{itemize}
+%   \item On POSIX-like systems, the package uses
+%     \verb|mkdir -p <outdir>|.
+%   \item On Windows, the package uses \verb|mkdir <outdir>|.
+% \end{itemize}
+%
+% This requires that shell escape be enabled for the \TeX{} engine, as the
+% implementation relies on \cs{sys_shell_now:n}. If shell escape is not
+% available or is disabled, the package raises an error and asks the user
+% either to create the directory manually or to re-run the compilation with
+% shell escape enabled.
+%
+% When the \texttt{verbose} option is set to \texttt{true}, the package
+% additionally reports the effective cache directory in the terminal and
+% log file.
+%
+% \end{documentation}
+% \begin{implementation}
+%
+% \subsection{Package declaration and internal variables}
 %
 %    \begin{macrocode}
 %<*package>
-%    \end{macrocode}
-%
-%    \begin{macrocode}
-\NeedsTeXFormat{LaTeX2e}[1999/12/01]
-\ProvidesPackage{\jobname}[\liquidtexdate\space v\liquidtexversion\space LaTeX with integrated Liquid templating]
-%    \end{macrocode}
-%
-% Pour pouvoir disposer d'autant de \enquote{flots} d'écriture dans
-% des fichiers annexes que nécessaire.
-%    \begin{macrocode}
+\RequirePackage{expl3,xparse,l3keys2e}
+
+\ProvidesExplPackage
+  {liquidtex}
+  {\liquidtexdate}
+  {\liquidtexversion}
+  {LaTeX with integrated Liquid templating}
+
 \ExplSyntaxOn
-\sys_if_engine_pdftex:T {\RequirePackage{morewrites}}
+
+% internal configuration variables
+\bool_new:N \__lqt_verbose_bool
+\tl_new:N   \__lqt_outdir_tl
+\bool_new:N \__lqt_use_auxdir_bool
+\bool_new:N \__lqt_no_cache_bool
+\tl_new:N \__lqt_engine_tl
+
+\tl_new:N   \__lqt_engine_path_tl
+\tl_new:N   \__lqt_engine_arg_style_tl
+\int_new:N  \__lqt_engine_template_index_int
+\int_new:N  \__lqt_engine_data_index_int
+\int_new:N  \__lqt_engine_output_index_int
+
+% internal derived value: effective cache directory
+\tl_new:N   \__lqt_cache_dir_tl
+%    \end{macrocode}
+%
+% \subsection{Key definitions}
+%
+% We define a key family \texttt{liquidtex} with one boolean key.
+%
+%    \begin{macrocode}
+\keys_define:nn { liquidtex }
+  {
+    verbose .bool_set:N = \__lqt_verbose_bool,
+    verbose .initial:n  = false,
+    verbose .default:n  = true,
+
+    outdir  .tl_set:N   = \__lqt_outdir_tl,
+    outdir  .initial:n  = {.liquid-cache},
+    outdir  .usage:n    = preamble,
+
+    use-auxdir .bool_set:N = \__lqt_use_auxdir_bool,
+    use-auxdir .initial:n  = true,
+    use-auxdir .default:n  = true,
+    use-auxdir .usage:n    = preamble,
+
+    no-cache .bool_set:N = \__lqt_no_cache_bool,
+    no-cache .initial:n  = false,
+    no-cache .default:n  = true,
+    no-cache .usage:n    = preamble,
+
+    engine .choice:,
+    engine / lua .code:n      =
+    { \tl_set:Nn \__lqt_engine_tl { lua } },
+    engine / external .code:n =
+    { \tl_set:Nn \__lqt_engine_tl { external } },
+    engine / unknown .code:n =
+    {
+      \msg_error:nnx { liquidtex } { unknown-engine } {#1}
+    },
+
+    engine .initial:n = external,
+    engine .usage:n   = preamble,
+
+    engine-conf .code:n =
+    { \keys_set:nn { liquidtex / engine-conf } { #1 } },
+    engine-conf .usage:n = preamble,
+}
+
+\keys_define:nn { liquidtex / engine-conf }
+{
+  path .tl_set:N   = \__lqt_engine_path_tl,
+  path .initial:n  = {},
+
+  positional .code:n = { \tl_set:Nn \__lqt_engine_arg_style_tl { positional } },
+  named      .code:n = { \tl_set:Nn \__lqt_engine_arg_style_tl { named } },
+
+  arg-style .choice:,
+  arg-style / positional .code:n =
+  { \tl_set:Nn \__lqt_engine_arg_style_tl { positional } },
+  arg-style / named .code:n =
+  { \tl_set:Nn \__lqt_engine_arg_style_tl { named } },
+  arg-style .initial:n = positional,
+
+  template-index .int_set:N = \__lqt_engine_template_index_int,
+  template-index .initial:n = 1,
+
+  data-index .int_set:N = \__lqt_engine_data_index_int,
+  data-index .initial:n = 2,
+
+  output-index .int_set:N = \__lqt_engine_output_index_int,
+  output-index .initial:n = 3,
+}
+%    \end{macrocode}
+% Process package options via l3keys2e:
+%
+%    \begin{macrocode}
+\ProcessKeysOptions{liquidtex}
+%    \end{macrocode}
+%
+% \subsection{Public configuration command}
+%
+%    \begin{macrocode}
+\NewDocumentCommand{\liquidsetup}{ m }{ \keys_set:nn { liquidtex } { #1 } }
+%    \end{macrocode}
+%
+% \subsection{Message definitions}
+%    \begin{macrocode}
+%Message for when shell escape is required to create directories.
+\msg_new:nnn { liquidtex } { shell-escape-required }
+{
+  Creating~ the~ liquidtex~ cache~ directory~ failed.~
+  Shell~ escape~ is~ required~ to~ create~ directories.~
+  If~ you~ wish~ to~ use~ a~ cache,~ please~ create~ '#1'~ manually~ or~
+  re-run~ LaTeX~ with~ shell~ escape~ enabled.~
+  If~ not,~ use~ the~ `no-cache`~ option.
+}
+
+% Informational message about the cache directory (used only if verbose).
+\msg_new:nnn { liquidtex } { cache-dir }
+{
+  Using~ liquidtex~ cache~ directory~ '#1'.
+}
+
+% Message for unknown engine
+\msg_new:nnn { liquidtex } { unknown-engine }
+  {
+    The~ engine~ value~ '#1'~ is~ not~ supported.~
+    Allowed~ engines~ are:~ lua,~ external.
+  }
+%
+% Missing external engine configuration
+\msg_new:nnn { liquidtex } { external-engine-config-missing }
+{
+  External~ engine~ selected,~ but~ the~ engine~ configuration~ is~
+  incomplete.~ Please~ set~ `engine-conf`~ with~ at~ least~ a~ `path`~
+  key~ linking~ to~ the~ engine~ executable.
+}
+%    \end{macrocode}
+% \subsection{Cache directory handling}
+%    \begin{macrocode}
+%      Low-level helper: attempt to create directory #1 using the OS shell.
+\cs_new_protected:Npn \__lqt_mkdir:n #1
+{
+  \sys_if_shell_unrestricted:TF
+  {
+    \sys_if_platform_windows:TF
+    {
+      % Windows: mkdir creates parents and succeeds if the directory exists.
+      \sys_shell_now:e { mkdir~ "#1" }
+    }
+    {
+      % POSIX-like: use mkdir -p to create parents and ignore existing dir.
+      \sys_shell_now:e { mkdir~ -p~ "#1" }
+    }
+  }
+  {
+    \msg_error:nnx { liquidtex } { shell-escape-required } { #1 }
+  }
+}
+% 
+% Initialise the effective cache directory and ensure it exists.
+% For now we ignore auxdir and simply use the outdir value.
+\cs_new_protected:Npn \__lqt_init_cache_dir:
+{
+  % effective cache dir := outdir (auxdir integration may be added later)
+  \tl_set_eq:NN \__lqt_cache_dir_tl \__lqt_outdir_tl
+  \bool_if:NF \__lqt_no_cache_bool
+  {
+    \bool_if:NT \__lqt_verbose_bool
+    {
+      \msg_info:nnx
+      { liquidtex } { cache-dir }
+      { \tl_use:N \__lqt_cache_dir_tl }
+    }
+
+    \__lqt_mkdir:n { \tl_use:N \__lqt_cache_dir_tl }
+  }
+}
+%    \end{macrocode}
+% \subsection{Configuration Checks}
+%    \begin{macrocode}
+%      Check configuration existence when using external engine.
+\cs_new_protected:Npn \__lqt_check_engine_config:
+{
+  % Only relevant if engine = external
+  \tl_if_eq:VnT \__lqt_engine_tl { external }
+  {
+    % Require a non-empty path
+    \tl_if_blank:VTF \__lqt_engine_path_tl
+    {
+      \msg_error:nn { liquidtex } { external-engine-config-missing }
+    }
+    { % later we can add more checks here (indices, arg-style, etc.)
+    }
+  }
+}
+
+%    \end{macrocode}
+%    \begin{macrocode}
+\AtBeginDocument{ %
+  \__lqt_init_cache_dir:
+  \__lqt_check_engine_config:
+}
 \ExplSyntaxOff
-%    \end{macrocode}
-% Pour pouvoir définir des macros dont les arguments puissent être
-% spécifiés sous la forme ×clé=×\meta{valeur}, tant en argument de
-% ×\documentclass× que de macros et environnements de la classe.
-%    \begin{macrocode}
-\RequirePackage{pgfopts}[2011/06/02]%
-%    \end{macrocode}
-% Pour disposer d'une boîte à outils de programmation
-%    \begin{macrocode}
-\RequirePackage{etoolbox}[2011/01/03]%
-%    \end{macrocode}
-% Extension de \package{etoolbox} permettant de patcher des
-% commandes à argument(s) optionnel
-%    \begin{macrocode}
-\RequirePackage{xpatch}[2012/10/02]%
-%    \end{macrocode}
-% Assignation ×\let× pour macros à arguments optionnels améliorée
-%    \begin{macrocode}
-\RequirePackage{letltxmacro}[2010/09/02]%
-%    \end{macrocode}
-% Définitions avec deux arguments optionnels
-%    \begin{macrocode}
-\RequirePackage{twoopt}[1999/04/12]%
-%    \end{macrocode}
-% Pour la gestion des tests conditionnels
-%    \begin{macrocode}
-\RequirePackage{xifthen}[2009/04/17]%
-%    \end{macrocode}
-%
-%    \begin{macrocode}
-\newcommand{\LQT@PackageError}{\@ifstar{\@tempswatrue\@LQT@PackageError}{\@tempswafalse\@LQT@PackageError}}
-\newcommand{\@LQT@PackageError}[3][]{}
-%    \end{macrocode}
-% On définit la macro ×\LQT@PackageWarningNoLine× qui est essentiellement
-% identique à ×\PackageWarningNoLine×, sauf que les messages de warnings :
-% \begin{itemize}
-% \item apparaissent en fin de log ;
-% \item sont désactivés si l'une des options est passée.
-% \end{itemize}
-%
-%    \begin{macrocode}
-\newcommand{\LQT@PackageWarningNoLine}[1]{}%
-%    \end{macrocode}
-% On définit le chemin \enquote{lqt} par défaut des clés \enquote{pgf}.
-%    \begin{macrocode}
-\pgfkeys{/lqt/.is family}
-\pgfkeys{/lqt/.cd}
-\def\lqtsetup{\pgfqkeys{/lqt}}
-%    \end{macrocode}
-% On interdit l'utilisation de ×\lqtsetup× ailleurs qu'en préambule.
-%    \begin{macrocode}
-% \@onlypreamble\lqtsetup%
-%    \end{macrocode}
-%    \begin{macrocode}
-\newcommand{\LQT@create@boolean}[1]{%
-  % \yadsetup{#1/.is if = #1}
-  \newbool{LQT@#1}%
-  \lqtsetup{%
-    #1/.is choice,
-    #1/true/.code={%
-      \booltrue{LQT@#1}%
-    },
-    #1/false/.code={%
-      \boolfalse{LQT@#1}%
-    },
-    #1/.default=true,
-  }%
-  % }{%
-  %   \ClassWarningNoLine{yathesis}{%
-  %     Valeur passée à la clé `#1' non valide :\MessageBreak%
-  %     cette valeur ne peut être que `true' ou `false'%
-  %   }%
-  % }%
-}%
-% \LQT@create@boolean{nolink}%
-\LQT@create@boolean{noerror}%
-%
-\lqtsetup{noerror=true}%
-%
-%
-%    \end{macrocode}
-%
-% On crée des \enquote{hooks} permettant de passer, en option de
-% ×\documentclass×, des options aux packages chargés par la classe qui :
-% \begin{enumerate}
-% \item présentent un intérêt en soi pour l'utilisateur final ;
-% \item dont les options peuvent être utiles à l'utilisateur final.
-% \end{enumerate}
-%
-%    \begin{macrocode}
-% \PassOptionsToPackage{a4paper}{geometry}%
-% \PassOptionsToPackage{nodayofweek}{datetime}%
-%    \end{macrocode}
-% On passe au \Package{hyperref} (s'il est chargé par l'utilisteur final) des
-% options qui nous semblent pertinentes.
-%    \begin{macrocode}
-\PassOptionsToPackage{%
-  final,%
-  unicode,%
-  hyperfootnotes=false,%
-  hyperindex=false,%
-  plainpages=false,%
-  breaklinks,%
-  pdfpagemode=UseOutlines,%
-  pdfpagelayout=TwoPageRight%
-}{hyperref}%
-%    \end{macrocode}
-%
-% \section{Option handling}\label{sec:option-handling}
-%
-%    \begin{macrocode}
-%    \end{macrocode}
-%
-% \section{Package Loading}\label{sec:package-loading}
-%
-% Tous les packages suivants sont présents dans les distributions modernes
-% standard \LaTeX.
-%
-% Le \Package{xkeyval} permet aussi de définir des macros dont les arguments
-% puissent être spécifiés sous la forme ×clé=×\meta{valeur} mais ce n'est pas
-% pour cela qu'il est chargé : c'est pour éviter des erreurs qui ont lieu dans
-% certaines circonstances du fait du \Package{keyval} chargé par le
-% \Package{geometry}.
-%    \begin{macrocode}
-\RequirePackage{xkeyval}%
-%    \end{macrocode}
-% Gestion de la géométrie de la page.
-%    \begin{macrocode}
-\RequirePackage{geometry}[2010/09/12]%
-%    \end{macrocode}
-%    \begin{macrocode}
 %</package>
 %    \end{macrocode}
-\NewDocumentCommand{\hello}{ O{World} }{Hello, #1!}
+%
 % \end{implementation}
 \endinput
-
+% Local Variables:
+% mode: docTeX
+% TeX-master: t
+% End:
