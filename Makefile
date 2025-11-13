@@ -1,7 +1,7 @@
 NAME  = liquidtex
 SHELL = zsh
 PWD   = $(shell pwd)
-VERS  = $(shell ltxfileinfo -v $(NAME).dtx|sed -e 's/^v//')
+VERS  = $(shell grep -E "\\\\version{[0-9.]*.*}" liquidtex.dtx | sed -E "s|\\\\version\\{([0-9.a-z]*).*\\}|\1|")
 LOCAL = $(shell kpsewhich --var-value TEXMFLOCAL)
 UTREE = $(shell kpsewhich --var-value TEXMFHOME)
 TEXCC = lualatex
@@ -31,4 +31,5 @@ install: all
 zip: all
 	ln -sf . $(NAME)
 	zip -Drq $(PWD)/$(NAME)-$(VERS).zip $(NAME)/{README.md,CHANGELOG.md,$(NAME).{pdf,dtx,pkg,drv}}
+	zip -Drq $(PWD)/$(NAME).zip $(NAME)/{README.md,CHANGELOG.md,$(NAME).{pdf,dtx,pkg,drv}}
 	rm $(NAME)
