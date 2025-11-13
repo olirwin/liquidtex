@@ -1,0 +1,96 @@
+- name: "phase:0-foundation"
+  color: "0d1117"
+  description: "Core architecture and package backbone"
+
+- name: "phase:1-dev"
+  color: "003d73"
+  description: "Developer experience, logging, CLI building"
+
+- name: "phase:2-templates"
+  color: "005cc5"
+  description: "Inline Liquid, data blocks, template paths"
+
+- name: "phase:3-lua"
+  color: "238636"
+  description: "Lua-based rendering engine integration"
+
+- name: "phase:4-latex-integration"
+  color: "26a641"
+  description: "Templated sections, lists, rerun handling"
+
+- name: "phase:5-toolkit"
+  color: "b6e3ff"
+  description: "Filters, partials, validation, diagnostics"
+
+- name: "phase:6-workflow"
+  color: "a371f7"
+  description: "Publishing pipeline and ecosystem-level features"
+
+# ------------------------
+# Categories
+# ------------------------
+
+- name: "type:feature"
+  color: "0366d6"
+  description: "New feature"
+
+- name: "type:enhancement"
+  color: "6fdd8b"
+  description: "Quality-of-life improvements"
+
+- name: "type:bug"
+  color: "d73a49"
+  description: "Something is not working"
+
+- name: "type:docs"
+  color: "6a737d"
+  description: "Documentation updates"
+
+- name: "type:refactor"
+  color: "5319e7"
+  description: "Internal code cleanup"
+
+- name: "type:performance"
+  color: "d876e3"
+  description: "Performance improvements"
+
+# ------------------------
+# Difficulty / size
+# ------------------------
+
+- name: "difficulty:easy"
+  color: "bfd4f2"
+  description: "Good first issue / quick fix"
+
+- name: "difficulty:medium"
+  color: "c2e0c6"
+  description: "Requires some familiarity with the code"
+
+- name: "difficulty:hard"
+  color: "f9d0c4"
+  description: "Complex feature or deep internals"
+
+# ------------------------
+# Status labels
+# ------------------------
+
+- name: "status:blocked"
+  color: "e4e669"
+  description: "Blocked by another issue"
+
+- name: "status:in-progress"
+  color: "d876e3"
+  description: "Currently being worked on"
+
+- name: "status:needs-feedback"
+  color: "fef2c0"
+  description: "Needs clarification / user input"
+
+- name: "status:ready"
+  color: "0e8a16"
+  description: "Ready to implement"
+
+- name: "status:idea"
+  color: "f7c6c7"
+  description: "Early idea or rough concept"
+
