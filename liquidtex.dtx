@@ -77,7 +77,7 @@ time.
 % This field contains the version of the package.
 % The value is optional.
 % The value is restricted to 32 characters.
-\version{0.0.1 2025-11-11}
+\version{0.1.0 2025-11-13}
 % -------------------------------------------------------------------------
 % This field contains the name of the author(s).
 % The value is optional.
@@ -212,7 +212,7 @@ time.
 \fi
 %</internal>
 %<*package|install>
-\def\liquidtexversion{0.0.1}
+\def\liquidtexversion{0.1.0}
 \def\liquidtexdate{2025-11-12}
 %</package|install>
 %<*install>
@@ -340,8 +340,8 @@ Running "make install" installs the files in the local TeX tree.
 % \DoNotIndex{\addbibresource,\biolinumKeyGlyph,\DeclareRobustCommand,\ClassWarning,\DescribeOption,\DescribeShortCut,\ifcase,\ifnum,\ifthenelse,\option,\pagestyle}
 % \DoNotIndex{\newcommand,\newenvironment}
 %
-% \def\liquidtexversion{0.0.1}
-% \def\liquidtexdate{2025-11-11}
+% \def\liquidtexversion{0.1.0}
+% \def\liquidtexdate{2025-11-13}
 %
 %\title{\textsf{liquidtex} --- \LaTeX{} with integrated Liquid templating\thanks{This file
 %   describes version \liquidtexversion, last revised \liquidtexdate.}
@@ -353,70 +353,90 @@ Running "make install" installs the files in the local TeX tree.
 %
 % \begin{abstract}
 %   The \pkg{liquidtex} package integrates a Liquid-style templating layer
-%   into the \LaTeX{} compilation process. At this stage the package
-%   contains only the minimal scaffolding: an option interface and a
-%   configuration command. Additional functionality will be introduced
-%   incrementally. %
+%   into the \LaTeX{} compilation process.  It allows authors to incorporate
+%   templated, data-driven content into their documents by automatically
+%   rendering Liquid templates at compile time.
 % \end{abstract}
-% \begin{documentation}
-%
-%^^A Please note that the following implementation is far from being well
-%^^A documented. This may be improved in the future.
-%
-% \end{documentation}
-%
-% \section{User interface and package options}
 %
 % \begin{documentation}
 %
-% \subsection{Package options}
+% \section{Package options}
 %
-% The package defines a key--value interface based on \pkg{l3keys2e}.
-% The same keys are used both as package options and at runtime via
-% \cs{liquidsetup}.
+% The package uses a key--value interface based on \pkg{l3keys2e}.  Options
+% may be passed at package load time or via \cs{liquidsetup} in the
+% preamble.  Some keys are restricted to preamble usage only.
 %
-% Currently defined keys:
+% \subsection{General options}
 %
 % \begin{description}
+%
 %   \item[\texttt{verbose} (bool)]
-%     Enable verbose logging.\newline
-%     Default value: \texttt{false}.
+%     Enables verbose diagnostic messages.\newline
+%     Default: \texttt{false}.
+%
+%   \item[\texttt{no-cache} (bool)]
+%     Disables the use of cached rendered output.\newline
+%     Default: \texttt{false}.
 %
 %   \item[\texttt{outdir = \meta{path}}]
 %     Directory used to store rendered templates and cache files.
-%     By default this is set to \texttt{.liquid-cache}.  At this
-%     point, the value is only recorded; later versions of the package
-%     will use it to determine where to write cache files.
+%     Default: \texttt{.liquid-cache}.\newline
+%     This key may only be used in the preamble.
 %
 %   \item[\texttt{use-auxdir} (bool)]
-%     Controls whether the value of \texttt{outdir} should be interpreted
-%     relative to the compilation auxiliary directory (for example, when
-%     the engine or build tool is invoked with an option such as
-%     \texttt{\string--auxdir} or \texttt{\string-output-directory}).
-%     The default value is \texttt{true}.  When \texttt{use-auxdir} is
-%     set to \texttt{false}, \texttt{outdir} will later be treated as a
-%     path independent of the auxiliary directory.
+%     Indicates whether \texttt{outdir} should be interpreted relative to
+%     the engine’s auxiliary directory (e.g.\ under \texttt{--auxdir} or
+%     \texttt{--output-directory}).  This integration is not yet
+%     implemented; the option is reserved for future versions.\newline
+%     Default: \texttt{true}.  Preamble-only.
 %
-%   \item[\texttt{no-cache} (bool)]
-%     Disables cache for temporary files.\newline
-%     Default value: \texttt{false}.
-%   \item[\texttt{engine = lua \textbar{} external}] Selects the backend
-%     used to render Liquid templates.
+% \end{description}
+%
+% \subsection{Template data}
+%
+% \begin{description}
+%
+%   \item[\texttt{data = \meta{file}}]
+%     Sets the default data source used when rendering templates.
+%     The value may be overridden for individual calls of
+%     \cs{inputliquid}.  No default is imposed.
+%
+% \end{description}
+%
+% \subsection{Engine selection}
+%
+% Liquid templates can be rendered by different backends.  The engine is
+% selected with:
+%
+% \begin{description}
+%
+%   \item[\texttt{engine = lua \textbar{} external}]
+%     Chooses the rendering backend.  This option is restricted to the
+%     preamble.
 %
 %     \begin{description}
 %
-%     \item[lua] Uses a Lua-based renderer. This requires the document to
-%       be compiled with Lua\LaTeX{}.
+%       \item[lua]
+%         Uses a Lua-based renderer.  Requires compilation with Lua\LaTeX.
 %
-%     \item[external] Uses an external program (to be specified later) to
-%       perform template rendering. Shell escape may be required.
+%       \item[external]
+%         Uses an external program to render the template.  This backend
+%         requires additional configuration through \texttt{engine-conf}.
+%         Shell escape is required to run the external renderer.
+%
 %     \end{description}
 %
-%     This option may only be set in the preamble. Its value is stored
-%     internally and will be used when the first template is processed.
-% \item[\texttt{engine-conf = \meta{key--value list}}]
-% Configures the external engine used when \texttt{engine = external}.
-% The value is a comma-separated list of sub-keys, for example:
+% \end{description}
+%
+% \subsection{External engine configuration}
+%
+% When \texttt{engine = external}, the external renderer must be configured
+% via:
+%
+% \begin{description}
+%
+%   \item[\texttt{engine-conf = \meta{key--value list}}]
+%     A subkey list describing the external renderer, for example:
 %
 % \begin{verbatim}
 %   engine-conf = {
@@ -428,29 +448,33 @@ Running "make install" installs the files in the local TeX tree.
 %   }
 % \end{verbatim}
 %
-% Supported sub-keys are:
+% Supported sub-keys:
 %
-% \begin{description}
-%   \item[\texttt{path = \meta{string}}]
-%     Path to the external engine executable.  This is required when
-%     \texttt{engine = external}.
+%     \begin{description}
 %
-%   \item[\texttt{arg-style = positional \textbar{} named}]
-%     Describes how arguments are passed to the engine.  When set to
-%     \texttt{positional}, the indices \texttt{template-index},
-%     \texttt{data-index}, and \texttt{output-index} specify the
-%     positions of the corresponding command-line arguments.
+%       \item[\texttt{path = \meta{string}}]
+%         Absolute or relative path to the external executable.
+%         This is mandatory when using the external engine.
 %
-%   \item[\texttt{template-index}, \texttt{data-index}, \texttt{output-index}]
-%     1-based indices specifying the positions of the template, data,
-%     and output arguments in positional mode.  Defaults are
-%     \texttt{1}, \texttt{2}, and \texttt{3}, respectively.
+%       \item[\texttt{arg-style = positional \textbar{} named}]
+%         Determines how command-line arguments are passed to the external
+%         renderer.
+%
+%       \item[\texttt{template-index}, \texttt{data-index}, \texttt{output-index}]
+%         When using positional argument style, these keys specify the
+%         1-based positions of the template, data, and output file arguments.
+%         Defaults: \texttt{1}, \texttt{2}, \texttt{3}.
+%
+%     \end{description}
+%
+% This option is restricted to the preamble.  If \texttt{engine = external}
+% and no \texttt{path} is provided, the package raises an error at
+% \cs{begin}\env{\{document\}}.
+%
 % \end{description}
 %
-% This option may only be set in the preamble.
-% When \texttt{engine = external} and no \texttt{path} is provided,
-% the package raises an error at the beginning of the document.
-% \end{description}
+%
+% \section{User interface}
 %
 % \subsection{Runtime configuration}
 %
@@ -458,58 +482,114 @@ Running "make install" installs the files in the local TeX tree.
 % \begin{syntax}
 %   \cs{liquidsetup}\marg{options}
 % \end{syntax}
-% Applies configuration keys at runtime.  For example:
+%
+% Applies configuration keys at runtime.  The effect is identical to using
+% package options, except that keys marked as “preamble-only” may only be
+% used before \cs{begin}\env{\{document\}}.  Example:
 %
 % \begin{verbatim}
 %   \liquidsetup{
 %     outdir     = .liquid-cache,
 %     use-auxdir = false,
-%     verbose    = true
+%     verbose    = true,
+%     data       = info.yml
 %   }
 % \end{verbatim}
 %
-% This command accepts the same keys as the package options processed in
-% the preamble.
 % \end{macro}
+%
 % \subsection{Cache directory management}
 %
-% The package maintains a cache directory where rendered templates and
-% other auxiliary files will be stored. At this stage, only the directory
-% creation is implemented; actual cache contents will be introduced in
-% later versions.
-%
-% The user can disable the use of this cache directory by passing the
-% \texttt{no-cache} option when loading the package or in the preamble.
-%
-% The effective cache directory is determined (for now) solely by the
-% \texttt{outdir} key:
+% The cache directory stores all rendered template output files.
 %
 % \begin{itemize}
-%   \item If \texttt{outdir} is not set explicitly, its default value
-%     \texttt{.liquid-cache} is used.
-%   \item No integration with engine-specific auxiliary directories
-%     (such as those provided by \texttt{\string--auxdir} or similar
-%     command-line options) is performed yet.
+%   \item The directory is determined by \texttt{outdir}.
+%   \item It is created automatically at \cs{begin}\env{\{document\}}.
+%   \item This requires shell escape, as directory creation uses
+%         \cs{sys_shell_now:n}.  If shell escape is disabled, the package
+%         issues an error asking the user to create the directory manually.
+%   \item When \texttt{no-cache} is set, cache lookup is disabled and
+%         templates are always re-rendered.
 % \end{itemize}
 %
-% At \cs{AtBeginDocument}, the package attempts to create the cache
-% directory using the underlying operating system:
+% Throughout the compilation, the package may emit diagnostic messages
+% about cache usage when \texttt{verbose} is enabled.
+%
+% \subsection{Liquid template rendering}
+%
+% \begin{macro}{\inputliquid}
+% \begin{syntax}
+%   \cs{inputliquid}\oarg{data file}\marg{template file}
+% \end{syntax}
+%
+% Renders a Liquid template and inputs the resulting \LaTeX{} code.
+%
+% \paragraph{Arguments}
+% \begin{itemize}
+%   \item \meta{template file}: mandatory path to a Liquid template.
+%   \item \meta{data file}: optional override of the global \texttt{data}
+%         setting.
+% \end{itemize}
+%
+% \paragraph{Caching}
+%
+% For each pair \marg{template}\marg{data}, the package generates a cache
+% file whose name is derived from the base names of the sources:
+%
+% \begin{quote}
+%   \verb|<outdir>/<template>+<data>.tex|
+% \end{quote}
+%
+% If no data file is used, the name simplifies to:
+%
+% \begin{quote}
+%   \verb|<outdir>/<template>.tex|
+% \end{quote}
+%
+% A cache entry is considered \emph{fresh} when:
 %
 % \begin{itemize}
-%   \item On POSIX-like systems, the package uses
-%     \verb|mkdir -p <outdir>|.
-%   \item On Windows, the package uses \verb|mkdir <outdir>|.
+%   \item it exists, and
+%   \item it is not older than the template file, and
+%   \item if a data file is present, it is not older than that data file.
 % \end{itemize}
 %
-% This requires that shell escape be enabled for the \TeX{} engine, as the
-% implementation relies on \cs{sys_shell_now:n}. If shell escape is not
-% available or is disabled, the package raises an error and asks the user
-% either to create the directory manually or to re-run the compilation with
-% shell escape enabled.
+% Freshness is checked using the \pkg{filemod} package.
+% If the cache is fresh, the cached file is input directly; otherwise, the
+% rendering engine is invoked and the result stored.
 %
-% When the \texttt{verbose} option is set to \texttt{true}, the package
-% additionally reports the effective cache directory in the terminal and
-% log file.
+% \paragraph{Rendering}
+%
+% Currently, \cs{inputliquid} is implemented only for the
+% \texttt{external} engine.  Rendering proceeds as follows:
+%
+% \begin{itemize}
+%   \item The external executable is invoked through the system shell.
+%   \item Shell escape must therefore be enabled.
+%   \item The template, data file, and output path are passed according to
+%         the configuration set by \texttt{engine-conf}.
+%   \item Upon success, the generated file is stored in the cache
+%         directory and immediately input.
+% \end{itemize}
+%
+% \paragraph{Example}
+%
+% \begin{verbatim}
+%   \usepackage[
+%     engine      = external,
+%     engine-conf = { path = liquidtex-cli },
+%     data        = cv.yml,
+%     outdir      = .liquid-cache
+%   ]{liquidtex}
+%
+%   % Uses cv.yml
+%   \inputliquid{templates/header.liq}
+%
+%   % Override data for this template
+%   \inputliquid[teaching.yml]{templates/teaching-entry.liq}
+% \end{verbatim}
+%
+% \end{macro}
 %
 % \end{documentation}
 % \begin{implementation}
@@ -519,7 +599,8 @@ Running "make install" installs the files in the local TeX tree.
 %    \begin{macrocode}
 %<*package>
 \RequirePackage{expl3,xparse,l3keys2e}
-
+% useful for file modification information - notably cache here
+\RequirePackage{filemod}
 \ProvidesExplPackage
   {liquidtex}
   {\liquidtexdate}
@@ -533,7 +614,8 @@ Running "make install" installs the files in the local TeX tree.
 \tl_new:N   \__lqt_outdir_tl
 \bool_new:N \__lqt_use_auxdir_bool
 \bool_new:N \__lqt_no_cache_bool
-\tl_new:N \__lqt_engine_tl
+\tl_new:N   \__lqt_engine_tl
+\tl_new:N   \__lqt_data_path_tl
 
 \tl_new:N   \__lqt_engine_path_tl
 \tl_new:N   \__lqt_engine_arg_style_tl
@@ -543,6 +625,17 @@ Running "make install" installs the files in the local TeX tree.
 
 % internal derived value: effective cache directory
 \tl_new:N   \__lqt_cache_dir_tl
+
+% temp variables
+\tl_new:N   \l__lqt_output_file_tl
+\tl_new:N   \l__lqt_cmd_line_tl
+\prop_new:N \l__lqt_file_components_prop
+\tl_new:N   \l__lqt_tmpl_base_tl
+\tl_new:N   \l__lqt_data_base_tl
+\tl_new:N   \l__lqt_tmp_dir_tl
+\tl_new:N   \l__lqt_tmp_ext_tl
+
+
 %    \end{macrocode}
 %
 % \subsection{Key definitions}
@@ -586,7 +679,10 @@ Running "make install" installs the files in the local TeX tree.
     engine-conf .code:n =
     { \keys_set:nn { liquidtex / engine-conf } { #1 } },
     engine-conf .usage:n = preamble,
-}
+
+    data .tl_set:N   = \__lqt_data_path_tl,
+    data .initial:n  = {},
+  }
 
 \keys_define:nn { liquidtex / engine-conf }
 {
@@ -657,6 +753,32 @@ Running "make install" installs the files in the local TeX tree.
   incomplete.~ Please~ set~ `engine-conf`~ with~ at~ least~ a~ `path`~
   key~ linking~ to~ the~ engine~ executable.
 }
+% If we try to use a non external engine
+\msg_new:nnn { liquidtex } { engine-not-external }
+  {
+    The~ command~ \string\inputliquid~ currently~ requires~
+    engine~=~external.~ The~ current~ engine~ is~ '#1'.
+  }
+
+% Using already rendered template from cache
+\msg_new:nnn { liquidtex } { render-cache }
+  {
+    Using~ cached~ output~ '#1'~ for~ template~ '#2'~ and~ data~ '#3'.
+  }
+  
+% Log start of rendering phase
+\msg_new:nnn { liquidtex } { render-start }
+  {
+    Rendering~ Liquid~ template~ '#1'~ with~ data~ '#2'.
+  }
+
+% Error when rendering
+\msg_new:nnn { liquidtex } { render-output-missing }
+  {
+    The~ external~ engine~ did~ not~ produce~ the~ expected~ output~
+    file~ '#1'.~
+    Please~ check~ the~ engine~ configuration~ and~ logs.
+  }
 %    \end{macrocode}
 % \subsection{Cache directory handling}
 %    \begin{macrocode}
@@ -717,6 +839,220 @@ Running "make install" installs the files in the local TeX tree.
   }
 }
 
+% #1 = tl var to store the base name
+% #2 = filename (possibly with path and extension)
+\cs_new_protected:Npn \__lqt_get_file_base_name:nn #1#2
+  {
+    \file_parse_full_name:nNNN { #2 }
+      \l__lqt_tmp_dir_tl
+      #1
+      \l__lqt_tmp_ext_tl
+  }
+
+% Compute output (cache) file name
+\cs_new_protected:Npn \__lqt_compute_output_file:nn #1#2
+  {
+    % #1 = template path, #2 = data path (may be empty)
+
+    % Base name of the template:
+    \__lqt_get_file_base_name:nn \l__lqt_tmpl_base_tl { #1 }
+
+    % Start building <cache>/<template>
+    \tl_set:Nn \l__lqt_output_file_tl
+      {
+        \tl_use:N \__lqt_cache_dir_tl
+        / \tl_use:N \l__lqt_tmpl_base_tl
+      }
+
+    % If we have a data file, append +<data-base>
+    \tl_if_blank:nF { #2 }
+      {
+        \__lqt_get_file_base_name:nn \l__lqt_data_base_tl { #2 }
+        \tl_put_right:Nn \l__lqt_output_file_tl
+          { + \tl_use:N \l__lqt_data_base_tl }
+      }
+
+    % Finally add the extension
+    \tl_put_right:Nn \l__lqt_output_file_tl { .tex }
+  }
+
+% Check if cached file is fresh
+\prg_new_conditional:Npnn \__lqt_cache_is_fresh:nn #1#2 { T, F, TF }
+  {
+    % #1 = template path, #2 = data path (may be empty)
+
+    % Compute cache filename for this (template, data) pair.
+    \__lqt_compute_output_file:nn { #1 }{ #2 }
+
+    % Cache file must exist, otherwise: not fresh.
+    \file_if_exist:VTF \l__lqt_output_file_tl
+      {
+        % Template must exist; if it doesn't, play safe: not fresh.
+        \file_if_exist:nF { #1 }
+          { \prg_return_false: }
+
+        % Compare cache vs template:
+        %   \filemodcmp[3]{cache}{template}{cache newer}{template newer}{equal}
+        % We want: fresh if cache >= template, stale if template > cache.
+        \filemodcmp[3]
+          { \tl_use:N \l__lqt_output_file_tl } { #1 }
+          {
+            % cache newer than template
+            \tl_if_blank:nTF { #2 }
+              {
+                % no data file → template check is enough
+                \prg_return_true:
+              }
+              {
+                % data file must exist
+                \file_if_exist:nF { #2 }
+                  { \prg_return_false: }
+
+                % cache vs data: fresh if cache >= data, stale if data > cache
+                \filemodcmp[3]
+                  { \tl_use:N \l__lqt_output_file_tl } { #2 }
+                  { \prg_return_true: }   % cache newer
+                  { \prg_return_false: }  % data newer
+                  { \prg_return_true: }   % equal
+              }
+          }
+          {
+            % template newer than cache → stale
+            \prg_return_false:
+          }
+          {
+            % cache and template have equal timestamp → treat as fresh wrt template
+            \tl_if_blank:nTF { #2 }
+              {
+                \prg_return_true:
+              }
+              {
+                % same data check as above
+                \file_if_exist:nF { #2 }
+                  { \prg_return_false: }
+
+                \filemodcmp[3]
+                  { \tl_use:N \l__lqt_output_file_tl } { #2 }
+                  { \prg_return_true: }   % cache newer
+                  { \prg_return_false: }  % data newer
+                  { \prg_return_true: }   % equal
+              }
+          }
+      }
+      {
+        % No cache file → not fresh.
+        \prg_return_false:
+      }
+  }
+
+%    \end{macrocode}
+% \subsection{Liquid rendering}
+%    \begin{macrocode}
+
+\cs_new_protected:Npn \__lqt_external_render_do:nn #1#2
+  {
+    % #1 = template path, #2 = data path (may be empty)
+    \bool_if:NT \__lqt_verbose_bool
+      {
+        \msg_info:nnx { liquidtex } { render-start }
+          {
+            Template~ '#1',~
+            data~ '#2',~
+            output~ '\tl_use:N \l__lqt_output_file_tl'
+          }
+      }
+
+    % Simple positional command line for now:
+    % "<engine-path>" "<template>" "<data>" "<output>"
+    \tl_set:Nx \l__lqt_cmd_line_tl
+    {
+      "\tl_use:N \__lqt_engine_path_tl" \c_space_tl
+      "#1"                               \c_space_tl
+      "#2"                               \c_space_tl
+      "\tl_use:N \l__lqt_output_file_tl"
+    }
+
+    \bool_if:NT \__lqt_verbose_bool
+      {
+        \msg_info:nnx { liquidtex } { cache-dir }
+          { Running~ external~ engine:~ \tl_use:N \l__lqt_cmd_line_tl }
+      }
+
+    \sys_shell_now:x { \tl_use:N \l__lqt_cmd_line_tl }
+
+    \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
+      { }
+      {
+        \msg_error:nnx
+          { liquidtex } { render-output-missing }
+          { \tl_use:N \l__lqt_output_file_tl }
+      }
+  }
+
+\cs_new_protected:Npn \__lqt_external_render:nn #1#2
+  {
+    % #1 = template path, #2 = data path (may be empty)
+    \sys_if_shell_unrestricted:TF
+      {
+        % Decide whether to use cache or render
+        \__lqt_cache_is_fresh:nnTF { #1 }{ #2 }
+          {
+            % Cache is fresh: file name already computed.
+            \bool_if:NT \__lqt_verbose_bool
+              {
+                \msg_info:nnxxx { liquidtex } { render-cache }
+                  {
+                    \tl_use:N \l__lqt_output_file_tl
+                  }{ #1 }{ #2 }
+              }
+            \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
+              { }
+              {
+                % Should not happen: cache vanished between check and input;
+                % fall back to re-render.
+                \__lqt_compute_output_file:nn { #1 }{ #2 }
+                \__lqt_external_render_do:nn { #1 }{ #2 }
+              }
+          }
+          {
+            % Cache not fresh or missing: recompute and render.
+            \__lqt_compute_output_file:nn { #1 }{ #2 }
+            \__lqt_external_render_do:nn { #1 }{ #2 }
+          }
+      }
+      {
+        \msg_error:nnx
+          { liquidtex } { shell-escape-required }
+          { \tl_use:N \__lqt_cache_dir_tl }
+      }
+  }
+
+\cs_new_protected:Npn \__lqt_input_liquid:nn #1#2
+  {
+    \tl_if_eq:VnTF \__lqt_engine_tl { external }
+      { \__lqt_external_render:nn { #1 }{ #2 } }
+      {
+        \msg_error:nnx
+          { liquidtex } { engine-not-external }
+          { \tl_use:N \__lqt_engine_tl }
+      }
+  }
+
+\NewDocumentCommand \inputliquid { O{} m }
+  {
+    % #1 = optional data override, #2 = template
+    \tl_set:Nn \l__lqt_tmp_template_tl { #2 }
+    \tl_set:Nx \l__lqt_tmp_data_tl
+      {
+        \tl_if_blank:nTF { #1 }
+          { \__lqt_data_path_tl }
+          { #1 }
+      }
+    \__lqt_input_liquid:nn
+      { \tl_use:N \l__lqt_tmp_template_tl }
+      { \tl_use:N \l__lqt_tmp_data_tl }
+  }
+  
 %    \end{macrocode}
 %    \begin{macrocode}
 \AtBeginDocument{ %
