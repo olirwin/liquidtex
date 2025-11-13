@@ -371,3 +371,11 @@ TSWLatexianTemp*
 *.pdf
 *.pkg
 *.sty
+
+
+.liquid-cache/
+create-*.sh
+*.yml
+*.zip
+templates
+
