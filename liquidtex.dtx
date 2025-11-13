@@ -299,11 +299,13 @@ Running "make install" installs the files in the local TeX tree.
 \ProvidesFile{liquidtex.dtx}
 %</driver>
 %<*driver>
-\documentclass[full,british,draft]{l3doc}
+\documentclass[full,british]{l3doc}
 \usepackage[a4paper,margin=25mm,left=50mm,nohead]{geometry}
 \usepackage[yad]{denisbdoc}
+\OnlyDescription
+\DisableImplementation
 \EnableCrossrefs
-\CodelineIndex
+% \CodelineIndex
 \RecordChanges
 \begin{document}
   \DocInput{\jobname.dtx}
@@ -460,6 +462,9 @@ Running "make install" installs the files in the local TeX tree.
 %         Determines how command-line arguments are passed to the external
 %         renderer.
 %
+%       \item[\texttt{positional \textbar{} named}]
+%         As a (maybe temporary) shortcut for the \texttt{arg-style} key options.
+%
 %       \item[\texttt{template-index}, \texttt{data-index}, \texttt{output-index}]
 %         When using positional argument style, these keys specify the
 %         1-based positions of the template, data, and output file arguments.
@@ -478,7 +483,7 @@ Running "make install" installs the files in the local TeX tree.
 %
 % \subsection{Runtime configuration}
 %
-% \begin{macro}{\liquidsetup}
+% \begin{function}{\liquidsetup}
 % \begin{syntax}
 %   \cs{liquidsetup}\marg{options}
 % \end{syntax}
@@ -496,7 +501,7 @@ Running "make install" installs the files in the local TeX tree.
 %   }
 % \end{verbatim}
 %
-% \end{macro}
+% \end{function}
 %
 % \subsection{Cache directory management}
 %
@@ -517,7 +522,7 @@ Running "make install" installs the files in the local TeX tree.
 %
 % \subsection{Liquid template rendering}
 %
-% \begin{macro}{\inputliquid}
+% \begin{function}{\inputliquid}
 % \begin{syntax}
 %   \cs{inputliquid}\oarg{data file}\marg{template file}
 % \end{syntax}
@@ -589,16 +594,18 @@ Running "make install" installs the files in the local TeX tree.
 %   \inputliquid[teaching.yml]{templates/teaching-entry.liq}
 % \end{verbatim}
 %
-% \end{macro}
+% \end{function}
 %
 % \end{documentation}
+% \MaybeStop{
+% }
 % \begin{implementation}
 %
 % \subsection{Package declaration and internal variables}
 %
 %    \begin{macrocode}
 %<*package>
-\RequirePackage{expl3,xparse,l3keys2e}
+\RequirePackage{expl3,xparse}
 % useful for file modification information - notably cache here
 \RequirePackage{filemod}
 \ProvidesExplPackage
@@ -629,12 +636,12 @@ Running "make install" installs the files in the local TeX tree.
 % temp variables
 \tl_new:N   \l__lqt_output_file_tl
 \tl_new:N   \l__lqt_cmd_line_tl
-\prop_new:N \l__lqt_file_components_prop
 \tl_new:N   \l__lqt_tmpl_base_tl
 \tl_new:N   \l__lqt_data_base_tl
 \tl_new:N   \l__lqt_tmp_dir_tl
 \tl_new:N   \l__lqt_tmp_ext_tl
-
+\tl_new:N   \l__lqt_tmp_template_tl
+\tl_new:N   \l__lqt_tmp_data_tl
 
 %    \end{macrocode}
 %
@@ -709,10 +716,10 @@ Running "make install" installs the files in the local TeX tree.
   output-index .initial:n = 3,
 }
 %    \end{macrocode}
-% Process package options via l3keys2e:
+% Process package options
 %
 %    \begin{macrocode}
-\ProcessKeysOptions{liquidtex}
+\ProcessKeyOptions[liquidtex]
 %    \end{macrocode}
 %
 % \subsection{Public configuration command}
@@ -728,7 +735,7 @@ Running "make install" installs the files in the local TeX tree.
 {
   Creating~ the~ liquidtex~ cache~ directory~ failed.~
   Shell~ escape~ is~ required~ to~ create~ directories.~
-  If~ you~ wish~ to~ use~ a~ cache,~ please~ create~ '#1'~ manually~ or~
+  If~ you~ wish~ to~ use~ a~ cache,~ please~ create~ `#1`~ manually~ or~
   re-run~ LaTeX~ with~ shell~ escape~ enabled.~
   If~ not,~ use~ the~ `no-cache`~ option.
 }
@@ -736,13 +743,13 @@ Running "make install" installs the files in the local TeX tree.
 % Informational message about the cache directory (used only if verbose).
 \msg_new:nnn { liquidtex } { cache-dir }
 {
-  Using~ liquidtex~ cache~ directory~ '#1'.
+  Using~ liquidtex~ cache~ directory~ `#1`.
 }
 
 % Message for unknown engine
 \msg_new:nnn { liquidtex } { unknown-engine }
   {
-    The~ engine~ value~ '#1'~ is~ not~ supported.~
+    The~ engine~ value~ `#1`~ is~ not~ supported.~
     Allowed~ engines~ are:~ lua,~ external.
   }
 %
@@ -757,27 +764,38 @@ Running "make install" installs the files in the local TeX tree.
 \msg_new:nnn { liquidtex } { engine-not-external }
   {
     The~ command~ \string\inputliquid~ currently~ requires~
-    engine~=~external.~ The~ current~ engine~ is~ '#1'.
+    engine~=~external.~ The~ current~ engine~ is~ `#1`.
   }
 
 % Using already rendered template from cache
 \msg_new:nnn { liquidtex } { render-cache }
   {
-    Using~ cached~ output~ '#1'~ for~ template~ '#2'~ and~ data~ '#3'.
+    Using~ cached~ output~ `#1`~ for~ template~ `#2`~ and~ data~ `#3`.
   }
   
 % Log start of rendering phase
 \msg_new:nnn { liquidtex } { render-start }
   {
-    Rendering~ Liquid~ template~ '#1'~ with~ data~ '#2'.
+    Rendering~ Liquid~ template~ `#1`~ with~ data~ `#2`~ into~ file~ `#3`.
   }
 
 % Error when rendering
 \msg_new:nnn { liquidtex } { render-output-missing }
   {
     The~ external~ engine~ did~ not~ produce~ the~ expected~ output~
-    file~ '#1'.~
+    file~ `#1`.~
     Please~ check~ the~ engine~ configuration~ and~ logs.
+  }
+% Rendering command
+\msg_new:nnn { liquidtex } { render-cmd }
+  {
+    Running~ external~ engine:~ `#1`
+  }
+% Missing template
+\msg_new:nnn { liquidtex } { missing-template }
+  {
+    The~ template~ file~ '#1'~ does~ not~ exist.~%
+    Cannot~ proceed~ with~ rendering.
   }
 %    \end{macrocode}
 % \subsection{Cache directory handling}
@@ -954,12 +972,8 @@ Running "make install" installs the files in the local TeX tree.
     % #1 = template path, #2 = data path (may be empty)
     \bool_if:NT \__lqt_verbose_bool
       {
-        \msg_info:nnx { liquidtex } { render-start }
-          {
-            Template~ '#1',~
-            data~ '#2',~
-            output~ '\tl_use:N \l__lqt_output_file_tl'
-          }
+        \msg_info:nnxxx { liquidtex } { render-start }
+          { #1 }{ #2 } {\tl_use:N \l__lqt_output_file_tl}
       }
 
     % Simple positional command line for now:
@@ -974,7 +988,7 @@ Running "make install" installs the files in the local TeX tree.
 
     \bool_if:NT \__lqt_verbose_bool
       {
-        \msg_info:nnx { liquidtex } { cache-dir }
+        \msg_info:nnx { liquidtex } { render-cmd }
           { Running~ external~ engine:~ \tl_use:N \l__lqt_cmd_line_tl }
       }
 
@@ -1029,6 +1043,15 @@ Running "make install" installs the files in the local TeX tree.
 
 \cs_new_protected:Npn \__lqt_input_liquid:nn #1#2
   {
+    % Check that the template file exists
+    \IfFileExists{ #1 }
+      {}
+      {
+        \msg_error:nnx
+          { liquidtex } { missing-template }
+          { #1 }
+      }
+
     \tl_if_eq:VnTF \__lqt_engine_tl { external }
       { \__lqt_external_render:nn { #1 }{ #2 } }
       {
@@ -1064,6 +1087,7 @@ Running "make install" installs the files in the local TeX tree.
 %    \end{macrocode}
 %
 % \end{implementation}
+%\Finale
 \endinput
 % Local Variables:
 % mode: docTeX
