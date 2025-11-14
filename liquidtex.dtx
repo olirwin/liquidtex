@@ -747,6 +747,11 @@ Running "make install" installs the files in the local TeX tree.
   Using~ liquidtex~ cache~ directory~ `#1`.
 }
 
+\msg_new:nnn { liquidtex } { tmp-cache-dir }
+{
+  Using~ liquidtex~ tmp~ cache~ directory~ `#1`.
+}
+
 % Message for unknown engine
 \msg_new:nnn { liquidtex } { unknown-engine }
   {
@@ -813,6 +818,11 @@ Running "make install" installs the files in the local TeX tree.
     See~ the~ log~ file~ `#3`~ (if~ it~ exists)~ for~ further~ details.
   }
 
+\msg_new:nnn { liquidtex } { remove-file }
+{
+  Removing~ file/folder~ `#1`.
+}
+
 %    \end{macrocode}
 % \subsection{Cache directory handling}
 %    \begin{macrocode}
@@ -838,20 +848,26 @@ Running "make install" installs the files in the local TeX tree.
 %
 % Remove file #1
 \cs_new_protected:Npn \__lqt_remove_file:n #1
+{
+  \file_if_exist:nTF {#1}
   {
-    \file_if_exist:nTF {#1}
-      {
+    \bool_if:NT \__lqt_verbose_bool
+    {
+      \msg_info:nnx
+      { liquidtex } { remove-file }
+      { #1 }
+    }
         % Platform-specific delete
         \sys_if_platform_windows:TF
           {
             % Windows: use cmd /c "del /F /Q file"
             \sys_shell_now:n
-              { cmd~ /c~ "del~ /F~ /Q~ #1" }
+              { cmd~ /c~ "del~ /F~ /S~ /Q~ #1" }
           }
           {
-            % Unix-like: rm -f file
+            % Unix-like: rm -rf file
             \sys_shell_now:n
-              { rm~ -f~ #1 }
+              { rm~ -rf~ #1 }
           }
       }
       { } % do nothing if file does not exist
@@ -863,7 +879,14 @@ Running "make install" installs the files in the local TeX tree.
 {
   % effective cache dir := outdir (auxdir integration may be added later)
   \tl_set_eq:NN \__lqt_cache_dir_tl \__lqt_outdir_tl
-  \bool_if:NF \__lqt_no_cache_bool
+  \bool_if:NTF \__lqt_no_cache_bool
+  {
+    \bool_if:NT \__lqt_verbose_bool
+    {
+      \msg_info:nnx
+      { liquidtex } { tmp-cache-dir }
+      { \tl_use:N \__lqt_cache_dir_tl }
+    }
   {
     \bool_if:NT \__lqt_verbose_bool
     {
@@ -871,9 +894,8 @@ Running "make install" installs the files in the local TeX tree.
       { liquidtex } { cache-dir }
       { \tl_use:N \__lqt_cache_dir_tl }
     }
-
-    \__lqt_mkdir:n { \tl_use:N \__lqt_cache_dir_tl }
   }
+  \__lqt_mkdir:n { \tl_use:N \__lqt_cache_dir_tl }
 }
 %    \end{macrocode}
 % \subsection{Configuration Checks}
@@ -906,7 +928,10 @@ Running "make install" installs the files in the local TeX tree.
 
 % Check if cached file is fresh
 \prg_new_conditional:Npnn \__lqt_cache_is_fresh:nn #1#2 { T, F, TF }
-  {
+{
+  % If `no-cache`, return false whatever
+  \bool_if:NT \__lqt_no_cache_bool
+  { \prg_return_false: }
     % #1 = template path, #2 = data path (may be empty)
 
     % Compute cache filename for this (template, data) pair.
@@ -1147,13 +1172,16 @@ Running "make install" installs the files in the local TeX tree.
             \__lqt_remove_file:x {\tl_use:N \l__lqt_output_file_tl}
             \__lqt_external_render_do:nn { #1 }{ #2 }
           }
-      }
-      {
-        \msg_error:nnx
+          \bool_if:NT \__lqt_no_cache_bool
+          {
+          }
+        }
+        {
+          \msg_error:nnx
           { liquidtex } { shell-escape-required }
           { \tl_use:N \__lqt_cache_dir_tl }
+        }
       }
-  }
 
 \cs_new_protected:Npn \__lqt_input_liquid:nn #1#2
   {
