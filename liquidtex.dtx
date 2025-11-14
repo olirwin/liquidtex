@@ -835,7 +835,28 @@ Running "make install" installs the files in the local TeX tree.
     \msg_error:nnx { liquidtex } { shell-escape-required } { #1 }
   }
 }
-% 
+%
+% Remove file #1
+\cs_new_protected:Npn \__lqt_remove_file:n #1
+  {
+    \file_if_exist:nTF {#1}
+      {
+        % Platform-specific delete
+        \sys_if_platform_windows:TF
+          {
+            % Windows: use cmd /c "del /F /Q file"
+            \sys_shell_now:n
+              { cmd~ /c~ "del~ /F~ /Q~ #1" }
+          }
+          {
+            % Unix-like: rm -f file
+            \sys_shell_now:n
+              { rm~ -f~ #1 }
+          }
+      }
+      { } % do nothing if file does not exist
+  }
+\cs_generate_variant:Nn \__lqt_remove_file:n { x }
 % Initialise the effective cache directory and ensure it exists.
 % For now we ignore auxdir and simply use the outdir value.
 \cs_new_protected:Npn \__lqt_init_cache_dir:
@@ -1028,7 +1049,9 @@ Running "make install" installs the files in the local TeX tree.
         \tl_put_right:Nx \l__lqt_cmd_line_tl
           { \space --output=\tl_use:N \l__lqt_output_file_tl }
       }
-  }
+    }
+
+
 
 %
 %    \end{macrocode}
@@ -1118,6 +1141,10 @@ Running "make install" installs the files in the local TeX tree.
           {
             % Cache not fresh or missing: recompute and render.
             \__lqt_compute_output_files:nn { #1 }{ #2 }
+            % Remove from cache stale file to avoid problems with versions
+            % This is to be able to fetch engine errors at rendering time
+            % If not done, it silently fails only
+            \__lqt_remove_file:x {\tl_use:N \l__lqt_output_file_tl}
             \__lqt_external_render_do:nn { #1 }{ #2 }
           }
       }
