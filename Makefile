@@ -15,7 +15,7 @@ $(NAME).pdf: $(NAME).dtx
 	$(TEXCC) --recorder --interaction=nonstopmode $(NAME).dtx > /dev/null
 	$(TEXCC) --recorder --interaction=nonstopmode $(NAME).dtx > /dev/null
 clean:
-	rm -f $(NAME).{aux,fls,glo,gls,hd,idx,ilg,ind,ins,log,out,bcf,glo2,run.xml,xdy,mw,synctex.gz}
+	rm -f $(NAME).{aux,fls,glo,gls,hd,idx,ilg,ind,ins,log,out,bcf,glo2,run.xml,xdy,mw,synctex.gz,bbl,blg,atfi,fdb_latexmk}
 distclean: clean
 	rm -f $(NAME).{pdf,sty,drv,pkg} README.md
 inst: all
