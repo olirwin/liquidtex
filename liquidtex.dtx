@@ -642,6 +642,7 @@ Running "make install" installs the files in the local TeX tree.
 \tl_new:N   \l__lqt_tmp_ext_tl
 \tl_new:N   \l__lqt_tmp_template_tl
 \tl_new:N   \l__lqt_tmp_data_tl
+\tl_new:N   \l__lqt_engine_log_file_tl
 
 %    \end{macrocode}
 %
@@ -778,6 +779,11 @@ Running "make install" installs the files in the local TeX tree.
   {
     Rendering~ Liquid~ template~ `#1`~ with~ data~ `#2`~ into~ file~ `#3`.
   }
+% Log end of rendering phase
+\msg_new:nnn { liquidtex } { render-end }
+  {
+    Rendered~ template~ in~ `#1`.
+  }
 
 % Error when rendering
 \msg_new:nnn { liquidtex } { render-output-missing }
@@ -797,6 +803,16 @@ Running "make install" installs the files in the local TeX tree.
     The~ template~ file~ '#1'~ does~ not~ exist.~%
     Cannot~ proceed~ with~ rendering.
   }
+
+% External engine failed
+\msg_new:nnn { liquidtex } { external-failed }
+  {
+    The~ external~ engine~ did~ not~ produce~ the~ expected~ output~
+    file~ `#1`.~
+    The~ executed~ command~ was:~ `#2`.~
+    See~ the~ log~ file~ `#3`~ (if~ it~ exists)~ for~ further~ details.
+  }
+
 %    \end{macrocode}
 % \subsection{Cache directory handling}
 %    \begin{macrocode}
@@ -808,11 +824,11 @@ Running "make install" installs the files in the local TeX tree.
     \sys_if_platform_windows:TF
     {
       % Windows: mkdir creates parents and succeeds if the directory exists.
-      \sys_shell_now:e { mkdir~ "#1" }
+      \sys_shell_now:e { mkdir~ #1 }
     }
     {
       % POSIX-like: use mkdir -p to create parents and ignore existing dir.
-      \sys_shell_now:e { mkdir~ -p~ "#1" }
+      \sys_shell_now:e { mkdir~ -p~ #1 }
     }
   }
   {
@@ -867,40 +883,13 @@ Running "make install" installs the files in the local TeX tree.
       \l__lqt_tmp_ext_tl
   }
 
-% Compute output (cache) file name
-\cs_new_protected:Npn \__lqt_compute_output_file:nn #1#2
-  {
-    % #1 = template path, #2 = data path (may be empty)
-
-    % Base name of the template:
-    \__lqt_get_file_base_name:nn \l__lqt_tmpl_base_tl { #1 }
-
-    % Start building <cache>/<template>
-    \tl_set:Nn \l__lqt_output_file_tl
-      {
-        \tl_use:N \__lqt_cache_dir_tl
-        / \tl_use:N \l__lqt_tmpl_base_tl
-      }
-
-    % If we have a data file, append +<data-base>
-    \tl_if_blank:nF { #2 }
-      {
-        \__lqt_get_file_base_name:nn \l__lqt_data_base_tl { #2 }
-        \tl_put_right:Nn \l__lqt_output_file_tl
-          { + \tl_use:N \l__lqt_data_base_tl }
-      }
-
-    % Finally add the extension
-    \tl_put_right:Nn \l__lqt_output_file_tl { .tex }
-  }
-
 % Check if cached file is fresh
 \prg_new_conditional:Npnn \__lqt_cache_is_fresh:nn #1#2 { T, F, TF }
   {
     % #1 = template path, #2 = data path (may be empty)
 
     % Compute cache filename for this (template, data) pair.
-    \__lqt_compute_output_file:nn { #1 }{ #2 }
+    \__lqt_compute_output_files:nn { #1 }{ #2 }
 
     % Cache file must exist, otherwise: not fresh.
     \file_if_exist:VTF \l__lqt_output_file_tl
@@ -964,43 +953,141 @@ Running "make install" installs the files in the local TeX tree.
   }
 
 %    \end{macrocode}
+%
+% \subsection{Helper functions}
+%    \begin{macrocode}
+%
+
+% Compute output (cache + log) file names
+\cs_new_protected:Npn \__lqt_compute_output_files:nn #1#2
+  {
+    % #1 = template path, #2 = data path (may be empty)
+
+    % Base name of the template:
+    \__lqt_get_file_base_name:nn \l__lqt_tmpl_base_tl { #1 }
+
+    % Start building <cache>/<template>
+    \tl_set:Nn \l__lqt_output_file_tl
+      {
+        \tl_use:N \__lqt_cache_dir_tl
+        / \tl_use:N \l__lqt_tmpl_base_tl
+      }
+
+    % If we have a data file, append +<data-base>
+    \tl_if_blank:nF { #2 }
+      {
+        \__lqt_get_file_base_name:nn \l__lqt_data_base_tl { #2 }
+        \tl_put_right:Nn \l__lqt_output_file_tl
+          { + \tl_use:N \l__lqt_data_base_tl }
+        }
+
+    % Copy to log name
+    \tl_set:Nx \l__lqt_engine_log_file_tl {\tl_use:N \l__lqt_output_file_tl}
+    %\tl_show:N \l__lqt_engine_logfile_tl
+
+    % Finally add the extensions
+    \tl_put_right:Nn \l__lqt_output_file_tl { .tex }
+    \tl_put_right:Nn \l__lqt_engine_log_file_tl { .log }
+  }
+
+%Build the external engine command line into \l__lqt_cmd_line_tl.
+% #1 = template path, #2 = data path (may be empty)
+\cs_new_protected:Npn \__lqt_build_cmdline:nn #1#2
+  {
+    \tl_clear:N \l__lqt_cmd_line_tl
+
+    % Always start with the engine path, quoted
+    \tl_put_right:Nx \l__lqt_cmd_line_tl
+      { \tl_use:N \__lqt_engine_path_tl }
+
+    % For now, implement two simple styles:
+    % - positional:  <engine> "<tmpl>" "<data>" "<out>"
+    % - named:      <engine> --template=... --data=... --output=...
+    \tl_if_eq:VnTF \__lqt_engine_arg_style_tl { positional }
+      {
+        % Positional style
+        \tl_put_right:Nn \l__lqt_cmd_line_tl { \space #1 }
+
+        \tl_if_blank:nF { #2 }
+          {
+            \tl_put_right:Nn \l__lqt_cmd_line_tl { \space #2 }
+          }
+
+        \tl_put_right:Nx \l__lqt_cmd_line_tl
+          { \space \tl_use:N \l__lqt_output_file_tl }
+      }
+      {
+        % Named style (very simple convention for now)
+        \tl_put_right:Nn \l__lqt_cmd_line_tl { \space --template=#1 }
+
+        \tl_if_blank:nF { #2 }
+          {
+            \tl_put_right:Nn \l__lqt_cmd_line_tl { \space --data=#2 }
+          }
+
+        \tl_put_right:Nx \l__lqt_cmd_line_tl
+          { \space --output=\tl_use:N \l__lqt_output_file_tl }
+      }
+  }
+
+%
+%    \end{macrocode}
+%
 % \subsection{Liquid rendering}
 %    \begin{macrocode}
 
 \cs_new_protected:Npn \__lqt_external_render_do:nn #1#2
   {
     % #1 = template path, #2 = data path (may be empty)
+
+    % Log start of rendering
     \bool_if:NT \__lqt_verbose_bool
       {
         \msg_info:nnxxx { liquidtex } { render-start }
-          { #1 }{ #2 } {\tl_use:N \l__lqt_output_file_tl}
+          {#1}{#2}{\tl_use:N \l__lqt_output_file_tl}
       }
 
     % Simple positional command line for now:
     % "<engine-path>" "<template>" "<data>" "<output>"
-    \tl_set:Nx \l__lqt_cmd_line_tl
-    {
-      "\tl_use:N \__lqt_engine_path_tl" \c_space_tl
-      "#1"                               \c_space_tl
-      "#2"                               \c_space_tl
-      "\tl_use:N \l__lqt_output_file_tl"
-    }
+    % \tl_set:Nx \l__lqt_cmd_line_tl
+    %   {
+    %     "\tl_use:N \__lqt_engine_path_tl"\space
+    %     "#1"\space
+    %     "#2"\space
+    %     "\tl_use:N \l__lqt_output_file_tl"
+    %   }
+    \__lqt_build_cmdline:nn {#1} {#2}
 
+    % Log the actual command line
     \bool_if:NT \__lqt_verbose_bool
       {
         \msg_info:nnx { liquidtex } { render-cmd }
-          { Running~ external~ engine:~ \tl_use:N \l__lqt_cmd_line_tl }
+          { \tl_use:N \l__lqt_cmd_line_tl }
       }
 
-    \sys_shell_now:x { \tl_use:N \l__lqt_cmd_line_tl }
-
-    \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
-      { }
+    % Run external engine, redirecting stderr to the log file
+    \sys_shell_now:x
       {
-        \msg_error:nnx
-          { liquidtex } { render-output-missing }
-          { \tl_use:N \l__lqt_output_file_tl }
+        \tl_use:N \l__lqt_cmd_line_tl \space
+        2> \tl_use:N \l__lqt_engine_log_file_tl
       }
+
+    % Input the produced file or report a detailed error
+    \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
+    {
+      \bool_if:NT \__lqt_verbose_bool
+      {
+        \msg_info:nnx { liquidtex } { render-end }
+        {\tl_use:N \l__lqt_output_file_tl}
+      }
+    }
+    {
+      \msg_error:nnxxx
+      { liquidtex } { external-failed }
+      { \tl_use:N \l__lqt_output_file_tl }
+      { \tl_use:N \l__lqt_cmd_line_tl }
+      { \tl_use:N \l__lqt_engine_log_file_tl }
+    }
   }
 
 \cs_new_protected:Npn \__lqt_external_render:nn #1#2
@@ -1024,13 +1111,13 @@ Running "make install" installs the files in the local TeX tree.
               {
                 % Should not happen: cache vanished between check and input;
                 % fall back to re-render.
-                \__lqt_compute_output_file:nn { #1 }{ #2 }
+                \__lqt_compute_output_files:nn { #1 }{ #2 }
                 \__lqt_external_render_do:nn { #1 }{ #2 }
               }
           }
           {
             % Cache not fresh or missing: recompute and render.
-            \__lqt_compute_output_file:nn { #1 }{ #2 }
+            \__lqt_compute_output_files:nn { #1 }{ #2 }
             \__lqt_external_render_do:nn { #1 }{ #2 }
           }
       }
