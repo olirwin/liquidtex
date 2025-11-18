@@ -1,0 +1,338 @@
+%<*preamble>
+%%------------:| ------------------------------------------------------------
+%%lqt-messages:| Sub module for `liquidtex` - messages
+%%      Author:| Oliver Irwin
+%%      E-mail:| oliver@irwin.sh
+%%     License:| Released under the LaTeX Project Public License v1.3c or later
+%%         See:| http://www.latex-project.org/lppl.txt
+%%
+%</preamble>
+%<*postamble>
+%%
+%% Copyright (C) 2025 by Oliver Irwin <oliver@irwin.sh>
+%%
+%% This work may be distributed and/or modified under the conditions of the
+%% LaTeX Project Public License (LPPL), either version 1.3c of this license or
+%% (at your option) any later version. The latest version of this license is
+%% in the file:
+%%
+%% http://www.latex-project.org/lppl.txt
+%%
+%% This work is "maintained" (as per LPPL maintenance status) by Oliver Irwin.
+%%
+%</postamble>
+%<*package>
+\def\lqtmessagesversion{0.1.0}
+\def\lqtmessagesdate{2025-11-14}
+\NeedsTeXFormat{LaTeX2e}[2020-01-01]
+\ProvidesExplPackage
+  {lqt-messages}
+  {\lqtmessagesdate}
+  {\lqtmessagesversion}
+  {Message definitions for the `liquidtex` package}
+
+\RequirePackage{expl3}
+\ExplSyntaxOn
+
+%% ----------------------------------------------------------------------
+%%  Message keys for liquidtex
+%% ----------------------------------------------------------------------
+%%
+%%  All messages here use the {liquidtex} message module. They are
+%%  intended to be used via \msg_error:nnn, \msg_warning:nnn,
+%%  \msg_info:nnn, or \msg_log:nnn in other modules.
+%%
+%%  General convention:
+%%    - Type:       \msg_...:nnn { liquidtex } { <name> } { <args> }
+%%    - Arguments:  documented below each message.
+%%
+%% ----------------------------------------------------------------------
+%%  shell-escape-required
+%% ----------------------------------------------------------------------
+%%
+%%  Type: error
+%%
+%%  Meaning:
+%%  The shell-escape flag is required but not passed.
+%%
+\msg_new:nnn { liquidtex } { shell-escape-required }
+  {
+    Shell~ escape~ is~ required.~
+    Please~ re-run~ LaTeX~ with~ `-shell-escape`~ enabled.~
+  }
+
+%% ----------------------------------------------------------------------
+%%  cant-create-cache
+%% ----------------------------------------------------------------------
+%%
+%%  Type: error
+%%
+%%  Arguments:
+%%    #1  The cache directory path that could not be created.
+%%
+%%  Meaning:
+%%    Raised when liquidtex fails to create the cache directory and
+%%    shell escape is required (but not enabled). Suggests possible
+%%    solutions.
+%%
+\msg_new:nnn { liquidtex } { cant-create-cache }
+  {
+    Creating~ the~ liquidtex~ cache~ directory~ failed.~\\
+    Trying~ to~ create~ `#1`.~\\
+    Possible~ solutions~ include:~\\
+    ~\\
+    (1)~ enable~ `-shell-escape`~ flag;~\\
+    (2)~ check~ that~ you~ have~ permissions~ to~ create~ directory;~ or~\\
+    (3)~ create~ `#1`~ manually.~\\
+    ~\\
+    If~ using~ internal~ engine,~ you~ can~ also~ use~ the~ `no-cache`~ option.
+  }
+
+
+
+%% ----------------------------------------------------------------------
+%%  cache-dir
+%% ----------------------------------------------------------------------
+%%
+%%  Type: info/log (typically verbose only)
+%%
+%%  Arguments:
+%%    #1  The cache directory path being used.
+%%
+%%  Meaning:
+%%    Informational message indicating which cache directory is in use.
+%%
+\msg_new:nnn { liquidtex } { cache-dir }
+  {
+    Using~ liquidtex~ cache~ directory~ `#1`.
+  }
+
+%% ----------------------------------------------------------------------
+%%  tmp-cache-dir
+%% ----------------------------------------------------------------------
+%%
+%%  Type: info/log (typically verbose only)
+%%
+%%  Arguments:
+%%    #1  The temporary cache directory path being used.
+%%
+%%  Meaning:
+%%    Informational message indicating which temporary cache directory
+%%    is in use (e.g., when falling back from a permanent cache).
+%%
+\msg_new:nnn { liquidtex } { tmp-cache-dir }
+  {
+    Using~ liquidtex~ tmp~ cache~ directory~ `#1`.
+  }
+
+%% ----------------------------------------------------------------------
+%%  unknown-engine
+%% ----------------------------------------------------------------------
+%%
+%%  Type: error
+%%
+%%  Arguments:
+%%    #1  The engine value provided by the user.
+%%
+%%  Meaning:
+%%    Raised when the user specifies an engine value that is not one of
+%%    the supported engines.
+%%
+\msg_new:nnn { liquidtex } { unknown-engine }
+  {
+    The~ engine~ value~ `#1`~ is~ not~ supported.~
+    Allowed~ engines~ are:~ lua,~ external.
+  }
+
+%% ----------------------------------------------------------------------
+%%  external-engine-config-missing
+%% ----------------------------------------------------------------------
+%%
+%%  Type: error
+%%
+%%  Meaning:
+%%    Raised when the user selects the external engine but does not
+%%    provide a complete engine configuration (e.g. missing `path` key).
+%%
+\msg_new:nnn { liquidtex } { external-engine-config-missing }
+  {
+    External~ engine~ selected,~ but~ the~ engine~ configuration~ is~
+    incomplete.~ Please~ set~ `engine-conf`~ with~ at~ least~ a~ `path`~
+    key~ linking~ to~ the~ engine~ executable.
+  }
+
+%% ----------------------------------------------------------------------
+%%  render-cache
+%% ----------------------------------------------------------------------
+%%
+%%  Type: info/log
+%%
+%%  Arguments:
+%%    #1  Path of the cached output file.
+%%    #2  Path of the template file.
+%%    #3  Path of the data file.
+%%
+%%  Meaning:
+%%    Informational message that rendering is skipped and an existing
+%%    cached result is reused.
+%%
+\msg_new:nnn { liquidtex } { render-cache }
+  {
+    Using~ cached~ output~ `#1`~ for~ template~ `#2`~ and~ data~ `#3`.
+  }
+
+%% ----------------------------------------------------------------------
+%%  render-start
+%% ----------------------------------------------------------------------
+%%
+%%  Type: info/log
+%%
+%%  Arguments:
+%%    #1  Path of the template file.
+%%    #2  Path of the data file.
+%%    #3  Path of the output file.
+%%
+%%  Meaning:
+%%    Informational message logged at the start of a rendering phase.
+%%
+\msg_new:nnn { liquidtex } { render-start }
+  {
+    Rendering~ Liquid~ template~ `#1`~ with~ data~ `#2`~ into~ file~ `#3`.
+  }
+
+%% ----------------------------------------------------------------------
+%%  render-end
+%% ----------------------------------------------------------------------
+%%
+%%  Type: info/log
+%%
+%%  Arguments:
+%%    #1  Path of the output file that was produced.
+%%
+%%  Meaning:
+%%    Informational message logged at the end of a successful rendering
+%%    phase.
+%%
+\msg_new:nnn { liquidtex } { render-end }
+  {
+    Rendered~ template~ in~ `#1`.
+  }
+
+%% ----------------------------------------------------------------------
+%%  render-output-missing
+%% ----------------------------------------------------------------------
+%%
+%%  Type: error
+%%
+%%  Arguments:
+%%    #1  Path of the output file that was expected but not found.
+%%
+%%  Meaning:
+%%    Raised when the engine claims to have rendered something, but the
+%%    expected output file is missing or unreadable.
+%%
+\msg_new:nnn { liquidtex } { render-output-missing }
+  {
+    The~ external~ engine~ did~ not~ produce~ the~ expected~ output~
+    file~ `#1`.~
+    Please~ check~ the~ engine~ configuration~ and~ logs.
+  }
+
+%% ----------------------------------------------------------------------
+%%  render-cmd
+%% ----------------------------------------------------------------------
+%%
+%%  Type: info/log
+%%
+%%  Arguments:
+%%    #1  The full command line used to invoke the external engine.
+%%
+%%  Meaning:
+%%    Informational message showing the external command being run.
+%%
+\msg_new:nnn { liquidtex } { render-cmd }
+  {
+    Running~ external~ engine:~ `#1`
+  }
+
+%% ----------------------------------------------------------------------
+%%  missing-template
+%% ----------------------------------------------------------------------
+%%
+%%  Type: error
+%%
+%%  Arguments:
+%%    #1  Path of the template file that was expected but not found.
+%%
+%%  Meaning:
+%%    Raised when the template file specified by the user does not
+%%    exist, so rendering cannot proceed.
+%%
+\msg_new:nnn { liquidtex } { missing-template }
+  {
+    The~ template~ file~ '#1'~ does~ not~ exist.~%
+    Cannot~ proceed~ with~ rendering.
+  }
+
+%% ----------------------------------------------------------------------
+%%  external-failed
+%% ----------------------------------------------------------------------
+%%
+%%  Type: error
+%%
+%%  Arguments:
+%%    #1  Path of the expected output file.
+%%    #2  The command line used to invoke the external engine.
+%%    #3  Path of the engine log file (if any).
+%%
+%%  Meaning:
+%%    Raised when the external engine fails to produce the expected
+%%    output file, and gives detailed information including the command
+%%    used and the log file to inspect.
+%%
+\msg_new:nnn { liquidtex } { external-failed }
+  {
+    The~ external~ engine~ did~ not~ produce~ the~ expected~ output~
+    file~ `#1`.~
+    The~ executed~ command~ was:~ `#2`.~
+    See~ the~ log~ file~ `#3`~ (if~ it~ exists)~ for~ further~ details.
+  }
+
+%% ----------------------------------------------------------------------
+%%  remove-file
+%% ----------------------------------------------------------------------
+%%
+%%  Type: info/log
+%%
+%%  Arguments:
+%%    #1  Path of the file or directory being removed.
+%%
+%%  Meaning:
+%%    Informational message used when liquidtex removes a file or
+%%    directory (typically from the cache).
+%%
+\msg_new:nnn { liquidtex } { remove-file }
+  {
+    Removing~ file/folder~ `#1`.
+  }
+
+%% ----------------------------------------------------------------------
+%% Logging functions
+%% ----------------------------------------------------------------------
+\cs_new_protected:Nn \__lqt_log:n { %
+  \bool_if:NT \__lqt_verbose_bool %
+  { %
+    \msg_info:nn %
+    { liquidtex } { #1 } %
+  } %
+} %
+\ExplSyntaxOff
+%</package>
+%\Finale
+\endinput
+
+% \endinput
+% Local Variables:
+% mode: docTeX
+% TeX-master: "../liquidtex"
+% End:

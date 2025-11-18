@@ -1,0 +1,204 @@
+%<*preamble>
+%%----------------------:| -----------------------------------------------------
+%%   lqt-engine-external:| Sub module for `liquidtex` - external engine
+%%                Author:| Oliver Irwin
+%%                E-mail:| oliver@irwin.sh
+%%               License:| Released under the LaTeX Project Public License v1.3c or later
+%%                   See:| http://www.latex-project.org/lppl.txt
+%%
+%</preamble>
+%<*postamble>
+%%
+%% Copyright (C) 2025 by Oliver Irwin <oliver@irwin.sh>
+%%
+%% This work may be distributed and/or modified under the conditions of the
+%% LaTeX Project Public License (LPPL), either version 1.3c of this license or
+%% (at your option) any later version. The latest version of this license is
+%% in the file:
+%%
+%% http://www.latex-project.org/lppl.txt
+%%
+%% This work is "maintained" (as per LPPL maintenance status) by Oliver Irwin.
+%%
+%</postamble>
+%<*package>
+\def\lqtengextversion{0.1.0}
+\def\lqtengextdate{2025-11-18}
+\NeedsTeXFormat{LaTeX2e}[2020-01-01]
+\ProvidesExplPackage
+  {lqt-engine-external}
+  {\lqtengextdate}
+  {\lqtengextversion}
+  {External engine handling for the `liquidtex` package}
+
+\RequirePackage{expl3}
+\RequirePackage{lqt-messages}
+\RequirePackage{lqt-files}
+\ExplSyntaxOn
+
+%% Variable definitions
+
+
+%  Check configuration existence when using external engine.
+\cs_new_protected:Nn \__lqt_check_engine_config:
+{
+  % Only relevant if engine = external
+  \tl_if_eq:VnT \__lqt_engine_tl { external }
+  {
+    % Require a non-empty path
+    \tl_if_blank:VTF \__lqt_engine_path_tl
+    {
+      \msg_fatal:nn { liquidtex } { external-engine-config-missing }
+    }
+    { % later we will add more checks here (indices, arg-style, etc.)
+    }
+  }
+}
+
+%% ------------------------------------------------------------------------
+%%                           HELPER FUNCTIONS
+%% ------------------------------------------------------------------------
+
+% Build the external engine command line into \l__lqt_cmd_line_tl.
+% #1 = template path, #2 = data path (may be empty)
+\cs_new_protected:Npn \__lqt_build_cmdline:nn #1#2
+  {
+    \tl_clear:N \l__lqt_cmd_line_tl
+
+    % Always start with the engine path, quoted
+    \tl_put_right:Nx \l__lqt_cmd_line_tl
+      { \tl_use:N \__lqt_engine_path_tl }
+
+    % For now, implement two simple styles:
+    % - positional:  <engine> "<tmpl>" "<data>" "<out>"
+    % - named:      <engine> --template=... --data=... --output=...
+    \tl_if_eq:VnTF \__lqt_engine_arg_style_tl { positional }
+      {
+        % Positional style
+        \tl_put_right:Nn \l__lqt_cmd_line_tl { \space #1 }
+
+        \tl_if_blank:nF { #2 }
+          {
+            \tl_put_right:Nn \l__lqt_cmd_line_tl { \space #2 }
+          }
+
+        \tl_put_right:Nx \l__lqt_cmd_line_tl
+          { \space \tl_use:N \l__lqt_output_file_tl }
+      }
+      {
+        % Named style (very simple convention for now)
+        \tl_put_right:Nn \l__lqt_cmd_line_tl { \space --template=#1 }
+
+        \tl_if_blank:nF { #2 }
+          {
+            \tl_put_right:Nn \l__lqt_cmd_line_tl { \space --data=#2 }
+          }
+
+        \tl_put_right:Nx \l__lqt_cmd_line_tl
+          { \space --output=\tl_use:N \l__lqt_output_file_tl }
+      }
+  }
+
+%% ------------------------------------------------------------------------
+%%                               RENDERING
+%% ------------------------------------------------------------------------
+
+% Aux function for rendering
+\cs_new_protected:Npn \__lqt_external_render_do:nn #1#2
+  {
+    % #1 = template path, #2 = data path (may be empty)
+
+    % Log start of rendering
+    \bool_if:NT \__lqt_verbose_bool
+      {
+        \msg_info:nnxxx { liquidtex } { render-start }
+          {#1}{#2}{\tl_use:N \l__lqt_output_file_tl}
+      }
+
+    \__lqt_build_cmdline:nn {#1} {#2}
+
+    % Log the actual command line
+    \bool_if:NT \__lqt_verbose_bool
+      {
+        \msg_info:nnx { liquidtex } { render-cmd }
+          { \tl_use:N \l__lqt_cmd_line_tl }
+      }
+
+    % Run external engine, redirecting stderr to the log file
+    \sys_shell_now:x
+      {
+        \tl_use:N \l__lqt_cmd_line_tl \space
+        2> \tl_use:N \l__lqt_engine_log_file_tl
+      }
+
+    % Input the produced file or report a detailed error
+    \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
+    {
+      \bool_if:NT \__lqt_verbose_bool
+      {
+        \msg_info:nnx { liquidtex } { render-end }
+        {\tl_use:N \l__lqt_output_file_tl}
+      }
+    }
+    {
+      \msg_error:nnxxx
+      { liquidtex } { external-failed }
+      { \tl_use:N \l__lqt_output_file_tl }
+      { \tl_use:N \l__lqt_cmd_line_tl }
+      { \tl_use:N \l__lqt_engine_log_file_tl }
+    }
+  }
+
+%% Interface function for `liquidtex`
+\cs_new_protected:Npn \__lqt_render:nn #1#2
+  {
+    % #1 = template path, #2 = data path (may be empty)
+    \sys_if_shell_unrestricted:TF
+      {
+        % Decide whether to use cache or render
+        \__lqt_cache_is_fresh:nnTF { #1 }{ #2 }
+          {
+            % Cache is fresh: file name already computed.
+            \bool_if:NT \__lqt_verbose_bool
+              {
+                \msg_info:nnxxx { liquidtex } { render-cache }
+                  {
+                    \tl_use:N \l__lqt_output_file_tl
+                  }{ #1 }{ #2 }
+              }
+            \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
+              { }
+              {
+                % Should not happen: cache vanished between check and input;
+                % fall back to re-render.
+                \__lqt_compute_output_files:nn { #1 }{ #2 }
+                \__lqt_external_render_do:nn { #1 }{ #2 }
+              }
+          }
+          {
+            % Cache not fresh or missing: recompute and render.
+            \__lqt_compute_output_files:nn { #1 }{ #2 }
+            % Remove from cache stale file to avoid problems with versions
+            % This is to be able to fetch engine errors at rendering time
+            % If not done, it silently fails only
+            \__lqt_remove_file:x {\tl_use:N \l__lqt_output_file_tl}
+            \__lqt_external_render_do:nn { #1 }{ #2 }
+          }
+        }
+        {
+          \msg_error:nnx
+          { liquidtex } { shell-escape-required }
+        }
+  }
+
+\AtBeginDocument{ %
+  \__lqt_check_engine_config:
+}
+\ExplSyntaxOff
+%</package>
+%\Finale
+\endinput
+% Local Variables:
+% mode: docTeX
+% TeX-master: "../liquidtex"
+% End:

@@ -233,6 +233,8 @@ liquidtex:| LaTeX with integrated Liquid templating
       See:| http://www.latex-project.org/lppl.txt
 
 \endpreamble
+\declarepreamble\utilpreamble
+\endpreamble
 \postamble
 
 Copyright (C) 2025 by Oliver Irwin <oliver@irwin.sh>
@@ -247,13 +249,15 @@ http://www.latex-project.org/lppl.txt
 This work is "maintained" (as per LPPL maintenance status) by
 Oliver Irwin.
 
-This work consists of the file liquidtex.dtx and a Makefile.
+This work consists of the file `liquidtex.dtx`, the .sty files located in the
+`utils` folder and a Makefile.
 Running "make" generates the derived files README, liquidtex.pdf and liquidtex.sty.
 Running "make inst" installs the files in the user's TeX tree.
 Running "make install" installs the files in the local TeX tree.
 
 \endpostamble
-
+\declarepostamble\utilpostamble
+\endpostamble
 %\usedir{tex/latex/liquidtex}
 \def\LQT@pkgname{\jobname}
 \def\LQT@packagename{\LQT@pkgname doc}
@@ -276,7 +280,27 @@ Running "make install" installs the files in the local TeX tree.
 }%
 \usedir{tex/latex/\LQT@pkgname}
 \generate{
-  \file{\jobname.sty}{\from{\jobname.dtx}{package}}
+  \file{\jobname.sty}{%
+    \from{\jobname.dtx}{package}%
+  }
+  \file{lqt-messages.sty}{%
+    \usepreamble\utilpreamble\usepostamble\utilpostamble
+    \from{utils/lqt-messages.dtx}{preamble}%
+    \from{utils/lqt-messages.dtx}{package}%
+    \from{utils/lqt-messages.dtx}{postamble}%
+  }
+  \file{lqt-files.sty}{%
+    \usepreamble\utilpreamble\usepostamble\utilpostamble
+    \from{utils/lqt-files.dtx}{preamble}%
+    \from{utils/lqt-files.dtx}{package}%
+    \from{utils/lqt-files.dtx}{postamble}%
+  }
+  \file{lqt-engine-external.sty}{%
+    \usepreamble\utilpreamble\usepostamble\utilpostamble
+    \from{utils/lqt-engine-external.dtx}{preamble}%
+    \from{utils/lqt-engine-external.dtx}{package}%
+    \from{utils/lqt-engine-external.dtx}{postamble}%
+  }
 }
 %</install>
 %<install>\endbatchfile
@@ -606,8 +630,6 @@ Running "make install" installs the files in the local TeX tree.
 %    \begin{macrocode}
 %<*package>
 \RequirePackage{expl3,xparse}
-% useful for file modification information - notably cache here
-\RequirePackage{filemod}
 \ProvidesExplPackage
   {liquidtex}
   {\liquidtexdate}
@@ -618,10 +640,10 @@ Running "make install" installs the files in the local TeX tree.
 
 % internal configuration variables
 \bool_new:N \__lqt_verbose_bool
-\tl_new:N   \__lqt_outdir_tl
 \bool_new:N \__lqt_use_auxdir_bool
 \bool_new:N \__lqt_no_cache_bool
 \tl_new:N   \__lqt_engine_tl
+\tl_new:N   \__lqt_outdir_tl
 \tl_new:N   \__lqt_data_path_tl
 
 \tl_new:N   \__lqt_engine_path_tl
@@ -723,465 +745,24 @@ Running "make install" installs the files in the local TeX tree.
 \ProcessKeyOptions[liquidtex]
 %    \end{macrocode}
 %
+% \subsection{Package requirements}
+%    \begin{macrocode}
+%% useful for file modification information - notably cache here
+\RequirePackage{filemod}
+%% internal message module
+\RequirePackage{lqt-messages}
+\RequirePackage{lqt-files}
+\RequirePackage{lqt-engine-external}
+%    \end{macrocode}
 % \subsection{Public configuration command}
 %
 %    \begin{macrocode}
 \NewDocumentCommand{\liquidsetup}{ m }{ \keys_set:nn { liquidtex } { #1 } }
 %    \end{macrocode}
 %
-% \subsection{Message definitions}
-%    \begin{macrocode}
-%Message for when shell escape is required to create directories.
-\msg_new:nnn { liquidtex } { shell-escape-required }
-{
-  Creating~ the~ liquidtex~ cache~ directory~ failed.~
-  Shell~ escape~ is~ required~ to~ create~ directories.~
-  If~ you~ wish~ to~ use~ a~ cache,~ please~ create~ `#1`~ manually~ or~
-  re-run~ LaTeX~ with~ shell~ escape~ enabled.~
-  If~ not,~ use~ the~ `no-cache`~ option.
-}
-
-% Informational message about the cache directory (used only if verbose).
-\msg_new:nnn { liquidtex } { cache-dir }
-{
-  Using~ liquidtex~ cache~ directory~ `#1`.
-}
-
-\msg_new:nnn { liquidtex } { tmp-cache-dir }
-{
-  Using~ liquidtex~ tmp~ cache~ directory~ `#1`.
-}
-
-% Message for unknown engine
-\msg_new:nnn { liquidtex } { unknown-engine }
-  {
-    The~ engine~ value~ `#1`~ is~ not~ supported.~
-    Allowed~ engines~ are:~ lua,~ external.
-  }
-%
-% Missing external engine configuration
-\msg_new:nnn { liquidtex } { external-engine-config-missing }
-{
-  External~ engine~ selected,~ but~ the~ engine~ configuration~ is~
-  incomplete.~ Please~ set~ `engine-conf`~ with~ at~ least~ a~ `path`~
-  key~ linking~ to~ the~ engine~ executable.
-}
-% If we try to use a non external engine
-\msg_new:nnn { liquidtex } { engine-not-external }
-  {
-    The~ command~ \string\inputliquid~ currently~ requires~
-    engine~=~external.~ The~ current~ engine~ is~ `#1`.
-  }
-
-% Using already rendered template from cache
-\msg_new:nnn { liquidtex } { render-cache }
-  {
-    Using~ cached~ output~ `#1`~ for~ template~ `#2`~ and~ data~ `#3`.
-  }
-  
-% Log start of rendering phase
-\msg_new:nnn { liquidtex } { render-start }
-  {
-    Rendering~ Liquid~ template~ `#1`~ with~ data~ `#2`~ into~ file~ `#3`.
-  }
-% Log end of rendering phase
-\msg_new:nnn { liquidtex } { render-end }
-  {
-    Rendered~ template~ in~ `#1`.
-  }
-
-% Error when rendering
-\msg_new:nnn { liquidtex } { render-output-missing }
-  {
-    The~ external~ engine~ did~ not~ produce~ the~ expected~ output~
-    file~ `#1`.~
-    Please~ check~ the~ engine~ configuration~ and~ logs.
-  }
-% Rendering command
-\msg_new:nnn { liquidtex } { render-cmd }
-  {
-    Running~ external~ engine:~ `#1`
-  }
-% Missing template
-\msg_new:nnn { liquidtex } { missing-template }
-  {
-    The~ template~ file~ '#1'~ does~ not~ exist.~%
-    Cannot~ proceed~ with~ rendering.
-  }
-
-% External engine failed
-\msg_new:nnn { liquidtex } { external-failed }
-  {
-    The~ external~ engine~ did~ not~ produce~ the~ expected~ output~
-    file~ `#1`.~
-    The~ executed~ command~ was:~ `#2`.~
-    See~ the~ log~ file~ `#3`~ (if~ it~ exists)~ for~ further~ details.
-  }
-
-\msg_new:nnn { liquidtex } { remove-file }
-{
-  Removing~ file/folder~ `#1`.
-}
-
-%    \end{macrocode}
-% \subsection{Cache directory handling}
-%    \begin{macrocode}
-%      Low-level helper: attempt to create directory #1 using the OS shell.
-\cs_new_protected:Npn \__lqt_mkdir:n #1
-{
-  \sys_if_shell_unrestricted:TF
-  {
-    \sys_if_platform_windows:TF
-    {
-      % Windows: mkdir creates parents and succeeds if the directory exists.
-      \sys_shell_now:e { mkdir~ #1 }
-    }
-    {
-      % POSIX-like: use mkdir -p to create parents and ignore existing dir.
-      \sys_shell_now:e { mkdir~ -p~ #1 }
-    }
-  }
-  {
-    \msg_error:nnx { liquidtex } { shell-escape-required } { #1 }
-  }
-}
-%
-% Remove file #1
-\cs_new_protected:Npn \__lqt_remove_file:n #1
-{
-  \file_if_exist:nTF {#1}
-  {
-    \bool_if:NT \__lqt_verbose_bool
-    {
-      \msg_info:nnx
-      { liquidtex } { remove-file }
-      { #1 }
-    }
-        % Platform-specific delete
-        \sys_if_platform_windows:TF
-          {
-            % Windows: use cmd /c "del /F /Q file"
-            \sys_shell_now:n
-              { cmd~ /c~ "del~ /F~ /S~ /Q~ #1" }
-          }
-          {
-            % Unix-like: rm -rf file
-            \sys_shell_now:n
-              { rm~ -rf~ #1 }
-          }
-      }
-      { } % do nothing if file does not exist
-  }
-\cs_generate_variant:Nn \__lqt_remove_file:n { x }
-% Initialise the effective cache directory and ensure it exists.
-% For now we ignore auxdir and simply use the outdir value.
-\cs_new_protected:Npn \__lqt_init_cache_dir:
-{
-  % effective cache dir := outdir (auxdir integration may be added later)
-  \tl_set_eq:NN \__lqt_cache_dir_tl \__lqt_outdir_tl
-  \bool_if:NTF \__lqt_no_cache_bool
-  {
-    \bool_if:NT \__lqt_verbose_bool
-    {
-      \msg_info:nnx
-      { liquidtex } { tmp-cache-dir }
-      { \tl_use:N \__lqt_cache_dir_tl }
-    }
-  {
-    \bool_if:NT \__lqt_verbose_bool
-    {
-      \msg_info:nnx
-      { liquidtex } { cache-dir }
-      { \tl_use:N \__lqt_cache_dir_tl }
-    }
-  }
-  \__lqt_mkdir:n { \tl_use:N \__lqt_cache_dir_tl }
-}
-%    \end{macrocode}
-% \subsection{Configuration Checks}
-%    \begin{macrocode}
-%      Check configuration existence when using external engine.
-\cs_new_protected:Npn \__lqt_check_engine_config:
-{
-  % Only relevant if engine = external
-  \tl_if_eq:VnT \__lqt_engine_tl { external }
-  {
-    % Require a non-empty path
-    \tl_if_blank:VTF \__lqt_engine_path_tl
-    {
-      \msg_error:nn { liquidtex } { external-engine-config-missing }
-    }
-    { % later we can add more checks here (indices, arg-style, etc.)
-    }
-  }
-}
-
-% #1 = tl var to store the base name
-% #2 = filename (possibly with path and extension)
-\cs_new_protected:Npn \__lqt_get_file_base_name:nn #1#2
-  {
-    \file_parse_full_name:nNNN { #2 }
-      \l__lqt_tmp_dir_tl
-      #1
-      \l__lqt_tmp_ext_tl
-  }
-
-% Check if cached file is fresh
-\prg_new_conditional:Npnn \__lqt_cache_is_fresh:nn #1#2 { T, F, TF }
-{
-  % If `no-cache`, return false whatever
-  \bool_if:NT \__lqt_no_cache_bool
-  { \prg_return_false: }
-    % #1 = template path, #2 = data path (may be empty)
-
-    % Compute cache filename for this (template, data) pair.
-    \__lqt_compute_output_files:nn { #1 }{ #2 }
-
-    % Cache file must exist, otherwise: not fresh.
-    \file_if_exist:VTF \l__lqt_output_file_tl
-      {
-        % Template must exist; if it doesn't, play safe: not fresh.
-        \file_if_exist:nF { #1 }
-          { \prg_return_false: }
-
-        % Compare cache vs template:
-        %   \filemodcmp[3]{cache}{template}{cache newer}{template newer}{equal}
-        % We want: fresh if cache >= template, stale if template > cache.
-        \filemodcmp[3]
-          { \tl_use:N \l__lqt_output_file_tl } { #1 }
-          {
-            % cache newer than template
-            \tl_if_blank:nTF { #2 }
-              {
-                % no data file → template check is enough
-                \prg_return_true:
-              }
-              {
-                % data file must exist
-                \file_if_exist:nF { #2 }
-                  { \prg_return_false: }
-
-                % cache vs data: fresh if cache >= data, stale if data > cache
-                \filemodcmp[3]
-                  { \tl_use:N \l__lqt_output_file_tl } { #2 }
-                  { \prg_return_true: }   % cache newer
-                  { \prg_return_false: }  % data newer
-                  { \prg_return_true: }   % equal
-              }
-          }
-          {
-            % template newer than cache → stale
-            \prg_return_false:
-          }
-          {
-            % cache and template have equal timestamp → treat as fresh wrt template
-            \tl_if_blank:nTF { #2 }
-              {
-                \prg_return_true:
-              }
-              {
-                % same data check as above
-                \file_if_exist:nF { #2 }
-                  { \prg_return_false: }
-
-                \filemodcmp[3]
-                  { \tl_use:N \l__lqt_output_file_tl } { #2 }
-                  { \prg_return_true: }   % cache newer
-                  { \prg_return_false: }  % data newer
-                  { \prg_return_true: }   % equal
-              }
-          }
-      }
-      {
-        % No cache file → not fresh.
-        \prg_return_false:
-      }
-  }
-
-%    \end{macrocode}
-%
-% \subsection{Helper functions}
-%    \begin{macrocode}
-%
-
-% Compute output (cache + log) file names
-\cs_new_protected:Npn \__lqt_compute_output_files:nn #1#2
-  {
-    % #1 = template path, #2 = data path (may be empty)
-
-    % Base name of the template:
-    \__lqt_get_file_base_name:nn \l__lqt_tmpl_base_tl { #1 }
-
-    % Start building <cache>/<template>
-    \tl_set:Nn \l__lqt_output_file_tl
-      {
-        \tl_use:N \__lqt_cache_dir_tl
-        / \tl_use:N \l__lqt_tmpl_base_tl
-      }
-
-    % If we have a data file, append +<data-base>
-    \tl_if_blank:nF { #2 }
-      {
-        \__lqt_get_file_base_name:nn \l__lqt_data_base_tl { #2 }
-        \tl_put_right:Nn \l__lqt_output_file_tl
-          { + \tl_use:N \l__lqt_data_base_tl }
-        }
-
-    % Copy to log name
-    \tl_set:Nx \l__lqt_engine_log_file_tl {\tl_use:N \l__lqt_output_file_tl}
-    %\tl_show:N \l__lqt_engine_logfile_tl
-
-    % Finally add the extensions
-    \tl_put_right:Nn \l__lqt_output_file_tl { .tex }
-    \tl_put_right:Nn \l__lqt_engine_log_file_tl { .log }
-  }
-
-%Build the external engine command line into \l__lqt_cmd_line_tl.
-% #1 = template path, #2 = data path (may be empty)
-\cs_new_protected:Npn \__lqt_build_cmdline:nn #1#2
-  {
-    \tl_clear:N \l__lqt_cmd_line_tl
-
-    % Always start with the engine path, quoted
-    \tl_put_right:Nx \l__lqt_cmd_line_tl
-      { \tl_use:N \__lqt_engine_path_tl }
-
-    % For now, implement two simple styles:
-    % - positional:  <engine> "<tmpl>" "<data>" "<out>"
-    % - named:      <engine> --template=... --data=... --output=...
-    \tl_if_eq:VnTF \__lqt_engine_arg_style_tl { positional }
-      {
-        % Positional style
-        \tl_put_right:Nn \l__lqt_cmd_line_tl { \space #1 }
-
-        \tl_if_blank:nF { #2 }
-          {
-            \tl_put_right:Nn \l__lqt_cmd_line_tl { \space #2 }
-          }
-
-        \tl_put_right:Nx \l__lqt_cmd_line_tl
-          { \space \tl_use:N \l__lqt_output_file_tl }
-      }
-      {
-        % Named style (very simple convention for now)
-        \tl_put_right:Nn \l__lqt_cmd_line_tl { \space --template=#1 }
-
-        \tl_if_blank:nF { #2 }
-          {
-            \tl_put_right:Nn \l__lqt_cmd_line_tl { \space --data=#2 }
-          }
-
-        \tl_put_right:Nx \l__lqt_cmd_line_tl
-          { \space --output=\tl_use:N \l__lqt_output_file_tl }
-      }
-    }
-
-
-
-%
-%    \end{macrocode}
-%
 % \subsection{Liquid rendering}
 %    \begin{macrocode}
 
-\cs_new_protected:Npn \__lqt_external_render_do:nn #1#2
-  {
-    % #1 = template path, #2 = data path (may be empty)
-
-    % Log start of rendering
-    \bool_if:NT \__lqt_verbose_bool
-      {
-        \msg_info:nnxxx { liquidtex } { render-start }
-          {#1}{#2}{\tl_use:N \l__lqt_output_file_tl}
-      }
-
-    % Simple positional command line for now:
-    % "<engine-path>" "<template>" "<data>" "<output>"
-    % \tl_set:Nx \l__lqt_cmd_line_tl
-    %   {
-    %     "\tl_use:N \__lqt_engine_path_tl"\space
-    %     "#1"\space
-    %     "#2"\space
-    %     "\tl_use:N \l__lqt_output_file_tl"
-    %   }
-    \__lqt_build_cmdline:nn {#1} {#2}
-
-    % Log the actual command line
-    \bool_if:NT \__lqt_verbose_bool
-      {
-        \msg_info:nnx { liquidtex } { render-cmd }
-          { \tl_use:N \l__lqt_cmd_line_tl }
-      }
-
-    % Run external engine, redirecting stderr to the log file
-    \sys_shell_now:x
-      {
-        \tl_use:N \l__lqt_cmd_line_tl \space
-        2> \tl_use:N \l__lqt_engine_log_file_tl
-      }
-
-    % Input the produced file or report a detailed error
-    \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
-    {
-      \bool_if:NT \__lqt_verbose_bool
-      {
-        \msg_info:nnx { liquidtex } { render-end }
-        {\tl_use:N \l__lqt_output_file_tl}
-      }
-    }
-    {
-      \msg_error:nnxxx
-      { liquidtex } { external-failed }
-      { \tl_use:N \l__lqt_output_file_tl }
-      { \tl_use:N \l__lqt_cmd_line_tl }
-      { \tl_use:N \l__lqt_engine_log_file_tl }
-    }
-  }
-
-\cs_new_protected:Npn \__lqt_external_render:nn #1#2
-  {
-    % #1 = template path, #2 = data path (may be empty)
-    \sys_if_shell_unrestricted:TF
-      {
-        % Decide whether to use cache or render
-        \__lqt_cache_is_fresh:nnTF { #1 }{ #2 }
-          {
-            % Cache is fresh: file name already computed.
-            \bool_if:NT \__lqt_verbose_bool
-              {
-                \msg_info:nnxxx { liquidtex } { render-cache }
-                  {
-                    \tl_use:N \l__lqt_output_file_tl
-                  }{ #1 }{ #2 }
-              }
-            \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
-              { }
-              {
-                % Should not happen: cache vanished between check and input;
-                % fall back to re-render.
-                \__lqt_compute_output_files:nn { #1 }{ #2 }
-                \__lqt_external_render_do:nn { #1 }{ #2 }
-              }
-          }
-          {
-            % Cache not fresh or missing: recompute and render.
-            \__lqt_compute_output_files:nn { #1 }{ #2 }
-            % Remove from cache stale file to avoid problems with versions
-            % This is to be able to fetch engine errors at rendering time
-            % If not done, it silently fails only
-            \__lqt_remove_file:x {\tl_use:N \l__lqt_output_file_tl}
-            \__lqt_external_render_do:nn { #1 }{ #2 }
-          }
-          \bool_if:NT \__lqt_no_cache_bool
-          {
-          }
-        }
-        {
-          \msg_error:nnx
-          { liquidtex } { shell-escape-required }
-          { \tl_use:N \__lqt_cache_dir_tl }
-        }
-      }
 
 \cs_new_protected:Npn \__lqt_input_liquid:nn #1#2
   {
@@ -1195,7 +776,7 @@ Running "make install" installs the files in the local TeX tree.
       }
 
     \tl_if_eq:VnTF \__lqt_engine_tl { external }
-      { \__lqt_external_render:nn { #1 }{ #2 } }
+      { \__lqt_render:nn { #1 }{ #2 } }
       {
         \msg_error:nnx
           { liquidtex } { engine-not-external }
@@ -1222,7 +803,6 @@ Running "make install" installs the files in the local TeX tree.
 %    \begin{macrocode}
 \AtBeginDocument{ %
   \__lqt_init_cache_dir:
-  \__lqt_check_engine_config:
 }
 \ExplSyntaxOff
 %</package>

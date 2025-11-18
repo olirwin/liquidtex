@@ -1,0 +1,231 @@
+%<*preamble>
+%%------------:| ------------------------------------------------------------
+%%   lqt-files:| Sub module for `liquidtex` - file handling
+%%      Author:| Oliver Irwin
+%%      E-mail:| oliver@irwin.sh
+%%     License:| Released under the LaTeX Project Public License v1.3c or later
+%%         See:| http://www.latex-project.org/lppl.txt
+%%
+%</preamble>
+%<*postamble>
+%%
+%% Copyright (C) 2025 by Oliver Irwin <oliver@irwin.sh>
+%%
+%% This work may be distributed and/or modified under the conditions of the
+%% LaTeX Project Public License (LPPL), either version 1.3c of this license or
+%% (at your option) any later version. The latest version of this license is
+%% in the file:
+%%
+%% http://www.latex-project.org/lppl.txt
+%%
+%% This work is "maintained" (as per LPPL maintenance status) by Oliver Irwin.
+%%
+%</postamble>
+%<*package>
+\def\lqtfilesversion{0.1.0}
+\def\lqtfilesdate{2025-11-14}
+\NeedsTeXFormat{LaTeX2e}[2020-01-01]
+\ProvidesExplPackage
+  {lqt-files}
+  {\lqtfilesdate}
+  {\lqtfilesversion}
+  {File handling for the `liquidtex` package}
+
+\RequirePackage{expl3}
+\RequirePackage{lqt-messages}
+\ExplSyntaxOn
+%      Low-level helper: attempt to create directory #1 using the OS shell.
+\cs_new_protected:Npn \__lqt_mkdir:n #1
+{
+  \sys_if_shell_unrestricted:TF
+  {
+    \sys_if_platform_windows:TF
+    {
+      % Windows: mkdir creates parents and succeeds if the directory exists.
+      \sys_shell_now:e { mkdir~ #1 }
+    }
+    {
+      % POSIX-like: use mkdir -p to create parents and ignore existing dir.
+      \sys_shell_now:e { mkdir~ -p~ #1 }
+    }
+  }
+  {
+    \msg_error:nnx { liquidtex } { cant-create-cache } { #1 }
+  }
+}
+%
+
+% Remove file #1
+\cs_new_protected:Npn \__lqt_remove_file:n #1
+{
+  \file_if_exist:nTF {#1}
+  {
+    \bool_if:NT \__lqt_verbose_bool
+    {
+      \msg_info:nnx
+      { liquidtex } { remove-file }
+      { #1 }
+    }
+        % Platform-specific delete
+        \sys_if_platform_windows:TF
+          {
+            % Windows: use cmd /c "del /F /Q file"
+            \sys_shell_now:n
+              { cmd~ /c~ "del~ /F~ /S~ /Q~ #1" }
+          }
+          {
+            % Unix-like: rm -rf file
+            \sys_shell_now:n
+              { rm~ -rf~ #1 }
+          }
+      }
+      { } % do nothing if file does not exist
+  }
+\cs_generate_variant:Nn \__lqt_remove_file:n { x }
+
+% Initialise the effective cache directory and ensure it exists.
+% For now we ignore auxdir and simply use the outdir value.
+\cs_new_protected:Nn \__lqt_init_cache_dir:
+{
+  % effective cache dir := outdir (auxdir integration may be added later)
+  \tl_set_eq:NN \__lqt_cache_dir_tl \__lqt_outdir_tl
+
+  \bool_if:NT \__lqt_verbose_bool
+    {
+      \msg_info:nnx
+      { liquidtex } { tmp-cache-dir }
+      { \tl_use:N \__lqt_cache_dir_tl }
+    }
+
+  \bool_if:NT \__lqt_verbose_bool
+    {
+      \msg_info:nnx
+      { liquidtex } { cache-dir }
+      { \tl_use:N \__lqt_cache_dir_tl }
+    }
+  
+  \__lqt_mkdir:n { \tl_use:N \__lqt_cache_dir_tl }
+}
+
+% #1 = tl var to store the base name
+% #2 = filename (possibly with path and extension)
+\cs_new_protected:Npn \__lqt_get_file_base_name:nn #1#2
+  {
+    \file_parse_full_name:nNNN { #2 }
+      \l__lqt_tmp_dir_tl
+      #1
+      \l__lqt_tmp_ext_tl
+  }
+
+% Check if cached file is fresh
+\prg_new_conditional:Npnn \__lqt_cache_is_fresh:nn #1#2 { T, F, TF }
+{
+  % If `no-cache`, return false whatever
+  \bool_if:NT \__lqt_no_cache_bool
+  { \prg_return_false: }
+    % #1 = template path, #2 = data path (may be empty)
+
+    % Compute cache filename for this (template, data) pair.
+    \__lqt_compute_output_files:nn { #1 }{ #2 }
+
+    % Cache file must exist, otherwise: not fresh.
+    \file_if_exist:VTF \l__lqt_output_file_tl
+      {
+        % Template must exist; if it doesn't, play safe: not fresh.
+        \file_if_exist:nF { #1 }
+          { \prg_return_false: }
+
+        % Compare cache vs template:
+        %   \filemodcmp[3]{cache}{template}{cache newer}{template newer}{equal}
+        % We want: fresh if cache >= template, stale if template > cache.
+        \filemodcmp[3]
+          { \tl_use:N \l__lqt_output_file_tl } { #1 }
+          {
+            % cache newer than template
+            \tl_if_blank:nTF { #2 }
+              {
+                % no data file → template check is enough
+                \prg_return_true:
+              }
+              {
+                % data file must exist
+                \file_if_exist:nF { #2 }
+                  { \prg_return_false: }
+
+                % cache vs data: fresh if cache >= data, stale if data > cache
+                \filemodcmp[3]
+                  { \tl_use:N \l__lqt_output_file_tl } { #2 }
+                  { \prg_return_true: }   % cache newer
+                  { \prg_return_false: }  % data newer
+                  { \prg_return_true: }   % equal
+              }
+          }
+          {
+            % template newer than cache → stale
+            \prg_return_false:
+          }
+          {
+            % cache and template have equal timestamp → treat as fresh wrt template
+            \tl_if_blank:nTF { #2 }
+              {
+                \prg_return_true:
+              }
+              {
+                % same data check as above
+                \file_if_exist:nF { #2 }
+                  { \prg_return_false: }
+
+                \filemodcmp[3]
+                  { \tl_use:N \l__lqt_output_file_tl } { #2 }
+                  { \prg_return_true: }   % cache newer
+                  { \prg_return_false: }  % data newer
+                  { \prg_return_true: }   % equal
+              }
+          }
+      }
+      {
+        % No cache file → not fresh.
+        \prg_return_false:
+      }
+  }
+
+% Compute output (cache + log) file names
+\cs_new_protected:Npn \__lqt_compute_output_files:nn #1#2
+  {
+    % #1 = template path, #2 = data path (may be empty)
+
+    % Base name of the template:
+    \__lqt_get_file_base_name:nn \l__lqt_tmpl_base_tl { #1 }
+
+    % Start building <cache>/<template>
+    \tl_set:Nn \l__lqt_output_file_tl
+      {
+        \tl_use:N \__lqt_cache_dir_tl
+        / \tl_use:N \l__lqt_tmpl_base_tl
+      }
+
+    % If we have a data file, append +<data-base>
+    \tl_if_blank:nF { #2 }
+      {
+        \__lqt_get_file_base_name:nn \l__lqt_data_base_tl { #2 }
+        \tl_put_right:Nn \l__lqt_output_file_tl
+          { + \tl_use:N \l__lqt_data_base_tl }
+        }
+
+    % Copy to log name
+    \tl_set:Nx \l__lqt_engine_log_file_tl {\tl_use:N \l__lqt_output_file_tl}
+    %\tl_show:N \l__lqt_engine_logfile_tl
+
+    % Finally add the extensions
+    \tl_put_right:Nn \l__lqt_output_file_tl { .tex }
+    \tl_put_right:Nn \l__lqt_engine_log_file_tl { .log }
+  }
+
+\ExplSyntaxOff
+%</package>
+%\Finale
+\endinput
+% Local Variables:
+% mode: docTeX
+% TeX-master: "../liquidtex"
+% End:
