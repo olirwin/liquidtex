@@ -11,16 +11,16 @@ Each phase can be implemented incrementally and safely.
 
 **Goal:** establish a stable backbone for template rendering.
 
-- [ ] `.dtx` structure, installation machinery, and documentation setup
-- [ ] key–value interface (`l3keys2e`)
-- [ ] package options: `verbose`, `outdir`, `no-cache`, `data`
-- [ ] engine selection: `external` (functional), `lua` (placeholder)
-- [ ] engine configuration subkeys (`engine-conf`)
-- [ ] cache directory creation
-- [ ] external rendering with shell escape
-- [ ] cache freshness detection using `filemod`
-- [ ] public command `\inputliquid` with data override
-- [ ] strict internal API naming (`__lqt_…`)
+- [x] `.dtx` structure, installation machinery, and documentation setup
+- [x] key–value interface (`l3keys2e`)
+- [x] package options: `verbose`, `outdir`, `no-cache`, `data`
+- [x] engine selection: `external` (functional), `lua` (placeholder)
+- [x] engine configuration subkeys (`engine-conf`)
+- [x] cache directory creation
+- [x] external rendering with shell escape
+- [x] cache freshness detection using `filemod`
+- [x] public command `\inputliquid` with data override
+- [x] strict internal API naming (`__lqt_…`)
 
 **Status:** ✔ Completed / ongoing cleanup.
 
@@ -32,21 +32,21 @@ Each phase can be implemented incrementally and safely.
 
 ### Core features
 
-- [ ] Clean command-line builder
+- [-] Clean command-line builder
 
   - [ ] positional argument indices
   - [ ] named argument style
-  - [ ] correct quoting for spaces
-  - [ ] cross-platform compatibility
-- [ ] Unified logging functions (`\__lqt_log:n`)
-- [ ] Verbose modes:
+  - [-] correct quoting for spaces
+  - [-] cross-platform compatibility
+- [o] Unified logging functions (`\__lqt_log:n`)
+- [-] Verbose modes:
 
   - [ ] `verbose=basic`
   - [ ] `verbose=full`
   - [ ] `trace-engine`
-- [ ] Forward external engine errors into LaTeX-friendly messages
-- [ ] Starred form of `\inputliquid` that prints the rendered file verbatim
-- [ ] Capturing stderr/stdout when possible
+- [x] Forward external engine errors into LaTeX-friendly messages
+- [o] Starred form of `\inputliquid` that prints the rendered file verbatim
+- [-] Capturing stderr/stdout when possible
 
 ### Stretch goals
 

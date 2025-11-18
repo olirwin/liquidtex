@@ -2,9 +2,11 @@ NAME  = liquidtex
 SHELL = zsh
 PWD   = $(shell pwd)
 VERS  = $(shell grep -E "\\\\version{[0-9.]*.*}" liquidtex.dtx | sed -E "s|\\\\version\\{([0-9.a-z]*).*\\}|\1|")
-LOCAL = $(shell kpsewhich --var-value TEXMFLOCAL)
+LOCAL := $(shell kpsewhich --var-value TEXMFLOCAL | awk -F: '{print $$1}')
 UTREE = $(shell kpsewhich --var-value TEXMFHOME)
 TEXCC = lualatex
+
+$(warning $(LOCAL))
 
 all:	$(NAME).pdf
 	test -e README.md || exit 0
@@ -17,7 +19,7 @@ $(NAME).pdf: $(NAME).dtx
 clean:
 	rm -f $(NAME).{aux,fls,glo,gls,hd,idx,ilg,ind,ins,log,out,bcf,glo2,run.xml,xdy,mw,synctex.gz,bbl,blg,atfi,fdb_latexmk}
 distclean: clean
-	rm -f $(NAME).{pdf,sty,drv,pkg} README.md
+	rm -f $(NAME).{pdf,sty,drv,pkg} README.md lqt-*.sty
 inst: all
 	mkdir -p $(UTREE)/{tex,source,doc}/latex/$(NAME)
 	cp $(NAME).dtx $(UTREE)/source/latex/$(NAME)
@@ -28,8 +30,10 @@ install: all
 	sudo cp $(NAME).dtx $(LOCAL)/source/latex/$(NAME)
 	sudo cp $(NAME).sty $(LOCAL)/tex/latex/$(NAME)
 	sudo cp $(NAME).pdf $(LOCAL)/doc/latex/$(NAME)
+	sudo cp lqt-*.sty $(LOCAL)/tex/latex/$(NAME)
+	sudo cp -r utils $(LOCAL)/source/latex/$(NAME)
 zip: all
 	ln -sf . $(NAME)
-	zip -Drq $(PWD)/$(NAME)-$(VERS).zip $(NAME)/{README.md,CHANGELOG.md,$(NAME).{pdf,dtx,pkg,drv}}
-	zip -Drq $(PWD)/$(NAME).zip $(NAME)/{README.md,CHANGELOG.md,$(NAME).{pdf,dtx,pkg,drv}}
+	zip -Drq $(PWD)/$(NAME)-$(VERS).zip $(NAME)/{README.md,CHANGELOG.md,$(NAME).{pdf,dtx,pkg,drv},utils}
+	zip -Drq $(PWD)/$(NAME).zip $(NAME)/{README.md,CHANGELOG.md,$(NAME).{pdf,dtx,pkg,drv},utils}
 	rm $(NAME)
