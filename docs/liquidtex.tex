@@ -7,81 +7,84 @@
 \def\liquidtexversion{0.1.0}
 \def\liquidtexdate{2025-11-19}
 
+\makeindex[title=Index des concepts,extout=pdx,extin=pnd,columnseprule]
+
 \begin{document}
 \input{utils/doc-title}
 
+\setcounter{page}{1}
 \section{Package options}
 
-\begin{docCommand}[doc description=\mandatory]{maketitle}{\oarg{options}}%
-  \index{titre!de la thèse!production}%
-  Cette commande \emph{produit} :
-  \begin{enumerate}
-  \item
-    \begin{enumerate}
-    \item une page de 1ère de couverture%
-      \index{couverture}%
-      \index{première de couverture}%
-      \footnote{Sauf contre-ordre, cf. clé \refKey{nofrontcover}.} ;
-    \item une page de titre.
-    \end{enumerate}
-    Ces deux pages sont composées dans la langue principale et
-    sont identiques\footnote{À ceci près que le numéro d'ordre de la thèse ne figure
-      que sur la page de 1ere de couverture\index{couverture}.} ;
-  \item \emph{automatiquement}\footnote{Sans qu'il soit nécessaire de faire
-      figurer une 2e occurrence de la commande \refCom{maketitle}.} une
-    seconde page de titre \emph{si} \aside{et seulement si} l'une au moins des
-    commandes \refCom{title}, \refCom{subtitle}, \refCom{academicfield} ou
-    \refCom{speciality} est employée avec son argument optionnel
-    (cf. \vref{rq-titre-supp}). Cette page est composée dans la langue
-    secondaire.
-  \end{enumerate}
-\end{docCommand}
+% \begin{docCommand}[doc description=\mandatory]{maketitle}{\oarg{options}}%
+%   \index{titre!de la thèse!production}%
+%   Cette commande \emph{produit} :
+%   \begin{enumerate}
+%   \item
+%     \begin{enumerate}
+%     \item une page de 1ère de couverture%
+%       \index{couverture}%
+%       \index{première de couverture}%
+%       \footnote{Sauf contre-ordre, cf. clé \refKey{nofrontcover}.} ;
+%     \item une page de titre.
+%     \end{enumerate}
+%     Ces deux pages sont composées dans la langue principale et
+%     sont identiques\footnote{À ceci près que le numéro d'ordre de la thèse ne figure
+%       que sur la page de 1ere de couverture\index{couverture}.} ;
+%   \item \emph{automatiquement}\footnote{Sans qu'il soit nécessaire de faire
+%       figurer une 2e occurrence de la commande \refCom{maketitle}.} une
+%     seconde page de titre \emph{si} \aside{et seulement si} l'une au moins des
+%     commandes \refCom{title}, \refCom{subtitle}, \refCom{academicfield} ou
+%     \refCom{speciality} est employée avec son argument optionnel
+%     (cf. \vref{rq-titre-supp}). Cette page est composée dans la langue
+%     secondaire.
+%   \end{enumerate}
+% \end{docCommand}
 
-\ShowEnvironment{\docCommand}
-%\show\docKey
+% \begin{docKey}{nofrontcover}{=\docValue{true}\textbar\docValue{false}}{par défaut
+%     \docValue{true}, initialement \docValue{false}}%
+%   \index{couverture}%
+%   \index{première de couverture!suppression}%
+%   \index{page de titre!première de couverture}%
+%   \index{page de titre!première de couverture!suppression}%
+%   \index{suppression!première de couverture}%
+%   Cette clé permet de désactiver la production de la 1e de couverture.
+% \end{docKey}
 
-\begin{docKey}{nofrontcover}{=\docValue{true}\textbar\docValue{false}}{par défaut
-    \docValue{true}, initialement \docValue{false}}%
-  \index{couverture}%
-  \index{première de couverture!suppression}%
-  \index{page de titre!première de couverture}%
-  \index{page de titre!première de couverture!suppression}%
-  \index{suppression!première de couverture}%
-  Cette clé permet de désactiver la production de la 1e de couverture.
-\end{docKey}
+The package uses a key--value interface based on \pkg{l3keys2e}. %
+Options may be passed at package load time or via \refCom{liquidsetup} in
+the preamble or the document. %
 
-The package uses a key--value interface based on \pkg{l3keys2e}.  Options
-may be passed at package load time or via \cmd{liquidsetup} in the
-preamble.  Some keys are restricted to preamble usage only.
+\begin{blockwarning}
+  Some keys are restricted to preamble usage only. %
+  When this is the case, the description of the key is marked with a
+  \preambleonly*{} symbol. %
+\end{blockwarning}
 
 \subsection{General options}
+
+These options are used for the general configuration of \pkg{liquidtex}. %
 
 \begin{docKey}{verbose}{=\docValue{true}\textbar\docValue{false}}{default:
     \docValue{true}, initial: \docValue{false}}%
   Enables verbose diagnostic messages.
 \end{docKey}
+\begin{docKey}{no-cache}{=\docValue{true}\textbar\docValue{false}}{default:
+    \docValue{true}, initial: \docValue{false}}%
+  Disables the use of cache-rendered output.%
+  \changes{v0.1.0}{2025-11-19}{Currently mis-functional}
+\end{docKey}
+\begin{docKey}{outdir}{=\meta{path}}{default: \meta{path}~\preambleonly*}
+   Directory used to store rendered templates and cache files. %
+\end{docKey}
+\begin{docKey}{use-auxdir}{=\docValue{true}\textbar\docValue{false}}{default:
+    \docValue{true}, initial: \docValue{false}~\preambleonly*}%
+  Indicates whether \refKey{outdir} should be interpreted relative to the
+  engine’s auxiliary directory (e.g.\ under \meta{--auxdir} or
+  \meta{--output-directory}). %
+  \changes{v0.1.0}{2025-11-19}{Not yet implemented.}
+\end{docKey}
 
-\emacs{}
-
-\begin{description}
-
-  \item[\texttt{no-cache} (bool)]
-    Disables the use of cached rendered output.\newline
-    Default: \texttt{false}.
-
-  \item[\texttt{outdir = \meta{path}}]
-    Directory used to store rendered templates and cache files.
-    Default: \texttt{.liquid-cache}.\newline
-    This key may only be used in the preamble.
-
-  \item[\texttt{use-auxdir} (bool)]
-    Indicates whether \texttt{outdir} should be interpreted relative to
-    the engine’s auxiliary directory (e.g.\ under \texttt{--auxdir} or
-    \texttt{--output-directory}).  This integration is not yet
-    implemented; the option is reserved for future versions.\newline
-    Default: \texttt{true}.  Preamble-only.
-
-\end{description}
+%\PrintChanges
 
 \subsection{Template data}
 
