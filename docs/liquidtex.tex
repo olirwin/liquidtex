@@ -1,0 +1,290 @@
+\documentclass[11pt,a4paper,british,twoside]{article}
+
+\pdfvariable minorversion=7
+
+\input{utils/doc-macros}
+
+\def\liquidtexversion{0.1.0}
+\def\liquidtexdate{2025-11-19}
+
+\begin{document}
+\input{utils/doc-title}
+
+\section{Package options}
+
+\begin{docCommand}[doc description=\mandatory]{maketitle}{\oarg{options}}%
+  \index{titre!de la thèse!production}%
+  Cette commande \emph{produit} :
+  \begin{enumerate}
+  \item
+    \begin{enumerate}
+    \item une page de 1ère de couverture%
+      \index{couverture}%
+      \index{première de couverture}%
+      \footnote{Sauf contre-ordre, cf. clé \refKey{nofrontcover}.} ;
+    \item une page de titre.
+    \end{enumerate}
+    Ces deux pages sont composées dans la langue principale et
+    sont identiques\footnote{À ceci près que le numéro d'ordre de la thèse ne figure
+      que sur la page de 1ere de couverture\index{couverture}.} ;
+  \item \emph{automatiquement}\footnote{Sans qu'il soit nécessaire de faire
+      figurer une 2e occurrence de la commande \refCom{maketitle}.} une
+    seconde page de titre \emph{si} \aside{et seulement si} l'une au moins des
+    commandes \refCom{title}, \refCom{subtitle}, \refCom{academicfield} ou
+    \refCom{speciality} est employée avec son argument optionnel
+    (cf. \vref{rq-titre-supp}). Cette page est composée dans la langue
+    secondaire.
+  \end{enumerate}
+\end{docCommand}
+
+\ShowEnvironment{\docCommand}
+%\show\docKey
+
+\begin{docKey}{nofrontcover}{=\docValue{true}\textbar\docValue{false}}{par défaut
+    \docValue{true}, initialement \docValue{false}}%
+  \index{couverture}%
+  \index{première de couverture!suppression}%
+  \index{page de titre!première de couverture}%
+  \index{page de titre!première de couverture!suppression}%
+  \index{suppression!première de couverture}%
+  Cette clé permet de désactiver la production de la 1e de couverture.
+\end{docKey}
+
+The package uses a key--value interface based on \pkg{l3keys2e}.  Options
+may be passed at package load time or via \cmd{liquidsetup} in the
+preamble.  Some keys are restricted to preamble usage only.
+
+\subsection{General options}
+
+\begin{docKey}{verbose}{=\docValue{true}\textbar\docValue{false}}{default:
+    \docValue{true}, initial: \docValue{false}}%
+  Enables verbose diagnostic messages.
+\end{docKey}
+
+\emacs{}
+
+\begin{description}
+
+  \item[\texttt{no-cache} (bool)]
+    Disables the use of cached rendered output.\newline
+    Default: \texttt{false}.
+
+  \item[\texttt{outdir = \meta{path}}]
+    Directory used to store rendered templates and cache files.
+    Default: \texttt{.liquid-cache}.\newline
+    This key may only be used in the preamble.
+
+  \item[\texttt{use-auxdir} (bool)]
+    Indicates whether \texttt{outdir} should be interpreted relative to
+    the engine’s auxiliary directory (e.g.\ under \texttt{--auxdir} or
+    \texttt{--output-directory}).  This integration is not yet
+    implemented; the option is reserved for future versions.\newline
+    Default: \texttt{true}.  Preamble-only.
+
+\end{description}
+
+\subsection{Template data}
+
+\begin{description}
+
+  \item[\texttt{data = \meta{file}}]
+    Sets the default data source used when rendering templates.
+    The value may be overridden for individual calls of
+    \cs{inputliquid}.  No default is imposed.
+
+\end{description}
+
+\subsection{Engine selection}
+
+Liquid templates can be rendered by different backends.  The engine is
+selected with:
+
+\begin{description}
+
+  \item[\texttt{engine = lua \textbar{} external}]
+    Chooses the rendering backend.  This option is restricted to the
+    preamble.
+
+    \begin{description}
+
+      \item[lua]
+        Uses a Lua-based renderer.  Requires compilation with Lua\LaTeX.
+
+      \item[external]
+        Uses an external program to render the template.  This backend
+        requires additional configuration through \texttt{engine-conf}.
+        Shell escape is required to run the external renderer.
+
+    \end{description}
+
+\end{description}
+
+\subsection{External engine configuration}
+
+When \texttt{engine = external}, the external renderer must be configured
+via:
+
+\begin{description}
+
+  \item[\texttt{engine-conf = \meta{key--value list}}]
+    A subkey list describing the external renderer, for example:
+
+\begin{verbatim}
+  engine-conf = {
+    path           = /usr/bin/liquidtex-cli,
+    arg-style      = positional,
+    template-index = 1,
+    data-index     = 2,
+    output-index   = 3,
+  }
+\end{verbatim}
+
+Supported sub-keys:
+
+    \begin{description}
+
+      \item[\texttt{path = \meta{string}}]
+        Absolute or relative path to the external executable.
+        This is mandatory when using the external engine.
+
+      \item[\texttt{arg-style = positional \textbar{} named}]
+        Determines how command-line arguments are passed to the external
+        renderer.
+
+      \item[\texttt{positional \textbar{} named}]
+        As a (maybe temporary) shortcut for the \texttt{arg-style} key options.
+
+      \item[\texttt{template-index}, \texttt{data-index}, \texttt{output-index}]
+        When using positional argument style, these keys specify the
+        1-based positions of the template, data, and output file arguments.
+        Defaults: \texttt{1}, \texttt{2}, \texttt{3}.
+
+    \end{description}
+
+This option is restricted to the preamble.  If \texttt{engine = external}
+and no \texttt{path} is provided, the package raises an error at
+\cmd{\{document\}}.
+
+\end{description}
+
+
+\section{User interface}
+
+\subsection{Runtime configuration}
+
+\verb+\liquidsetup+
+\begin{verbatim}
+  \cs{liquidsetup}\marg{options}
+\end{verbatim}
+
+Applies configuration keys at runtime.  The effect is identical to using
+package options, except that keys marked as “preamble-only” may only be
+used before \cmd{begin\{document\}}.  Example:
+
+\begin{verbatim}
+  \liquidsetup{
+    outdir     = .liquid-cache,
+    use-auxdir = false,
+    verbose    = true,
+    data       = info.yml
+  }
+\end{verbatim}
+
+\subsection{Cache directory management}
+
+The cache directory stores all rendered template output files.
+
+\begin{itemize}
+  \item The directory is determined by \texttt{outdir}.
+  \item It is created automatically at \cmd{begin\{document\}}.
+  \item This requires shell escape, as directory creation uses
+        \cmd{sys_shell_now:n}.  If shell escape is disabled, the package
+        issues an error asking the user to create the directory manually.
+  \item When \texttt{no-cache} is set, cache lookup is disabled and
+        templates are always re-rendered.
+\end{itemize}
+
+Throughout the compilation, the package may emit diagnostic messages
+about cache usage when \texttt{verbose} is enabled.
+
+\subsection{Liquid template rendering}
+
+\verb+\inputliquid+
+\begin{verbatim}
+  \cs{inputliquid}\oarg{data file}\marg{template file}
+\end{verbatim}
+
+Renders a Liquid template and inputs the resulting \LaTeX{} code.
+
+\paragraph{Arguments}
+\begin{itemize}
+  \item \meta{template file}: mandatory path to a Liquid template.
+  \item \meta{data file}: optional override of the global \texttt{data}
+        setting.
+\end{itemize}
+
+\paragraph{Caching}
+
+For each pair \marg{template}\marg{data}, the package generates a cache
+file whose name is derived from the base names of the sources:
+
+\begin{quote}
+  \verb|<outdir>/<template>+<data>.tex|
+\end{quote}
+
+If no data file is used, the name simplifies to:
+
+\begin{quote}
+  \verb|<outdir>/<template>.tex|
+\end{quote}
+
+A cache entry is considered \emph{fresh} when:
+
+\begin{itemize}
+  \item it exists, and
+  \item it is not older than the template file, and
+  \item if a data file is present, it is not older than that data file.
+\end{itemize}
+
+Freshness is checked using the \pkg{filemod} package.
+If the cache is fresh, the cached file is input directly; otherwise, the
+rendering engine is invoked and the result stored.
+
+\paragraph{Rendering}
+
+Currently, \cs{inputliquid} is implemented only for the
+\texttt{external} engine.  Rendering proceeds as follows:
+
+\begin{itemize}
+  \item The external executable is invoked through the system shell.
+  \item Shell escape must therefore be enabled.
+  \item The template, data file, and output path are passed according to
+        the configuration set by \texttt{engine-conf}.
+  \item Upon success, the generated file is stored in the cache
+        directory and immediately input.
+\end{itemize}
+
+\paragraph{Example}
+
+\begin{verbatim}
+  \usepackage[
+    engine      = external,
+    engine-conf = { path = liquidtex-cli },
+    data        = cv.yml,
+    outdir      = .liquid-cache
+  ]{liquidtex}
+
+  % Uses cv.yml
+  \inputliquid{templates/header.liq}
+
+  % Override data for this template
+  \inputliquid[teaching.yml]{templates/teaching-entry.liq}
+\end{verbatim}
+
+\end{document}
+
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: t
+%%% End:

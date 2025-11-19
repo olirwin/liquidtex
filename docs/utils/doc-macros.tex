@@ -1,0 +1,218 @@
+%%%%%% PACKAGES %%%%%%
+%
+% - Fonts -%
+\usepackage{lmodern}
+\usepackage{FiraSans}
+
+\usepackage{fontspec}
+
+\usepackage{babel}
+%
+% - Page geometry -%
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
+%
+%- Flexible bibliography -%
+\usepackage{csquotes}
+\usepackage[style=alphabetic,backend=biber,maxcitenames=6,maxbibnames=6]{biblatex}
+%\addbibresource{biblio.bib}
+%
+%- Math handling -%
+%\usepackage{amssymb}
+%\usepackage{amsthm}
+%\usepackage{mathtools}
+%\usepackage{complexity}
+%
+%- Misc -%
+\usepackage{afterpage}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{multirow}
+\usepackage{lscape}
+\usepackage[usenames, dvipsnames]{xcolor}
+\usepackage[pagestyles]{titlesec}
+\usepackage{tikz}
+\usepackage[indent]{parskip}
+\usepackage[cleardoublepage=empty]{scrextend}
+\usepackage{fancyhdr}
+\usepackage{colortbl}
+\usepackage{titletoc}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+%
+%- Better floats -%
+%\usepackage{floatrow}
+\usepackage{caption}
+\usepackage{subcaption}
+%
+%- listings -%
+\usepackage{minted}
+%
+%- Hypertext references -%
+\usepackage{hyperref}
+%
+%- Bookmarks -%
+\usepackage{bookmark}
+%
+\usepackage[most, minted]{tcolorbox}
+\usepackage[inkscape]{svg}
+
+\usepackage{stmaryrd}
+\usepackage{xifthen}
+
+\usepackage[yad]{denisbdoc}
+\usepackage{tablefootnote}
+%- Even better refs -%
+\usepackage{cleveref}
+
+
+
+\IfFontExistsTF{Fira Sans}{%
+  \setsansfont{Fira Sans}
+}
+
+\IfFontExistsTF{Fira Mono}{%
+  \setmonofont{Fira Mono}[Scale=MatchLowercase,Contextuals=Alternate]
+}{}
+
+\definecolor{lqt-darkblue}{HTML}{000037}
+\definecolor{lqt-indigo}{HTML}{5862ED}
+\definecolor{lqt-lightblue}{HTML}{7ABAFF}
+\definecolor{lqt-darkgreen}{HTML}{002D2D}
+\definecolor{lqt-green}{HTML}{32A68C}
+\definecolor{lqt-lightgreen}{HTML}{89E0B1}
+\definecolor{lqt-red}{HTML}{FC535C}
+\definecolor{lqt-brown}{HTML}{2D0505}
+\definecolor{lqt-pink}{HTML}{FFB4D2}
+\definecolor{lqt-orange}{HTML}{FF6941}
+\definecolor{lqt-yellow}{HTML}{FFD24B}
+\definecolor{lqt-beige}{HTML}{FAF0E1}
+\definecolor{lqt-lightgrey}{HTML}{EDEDED}
+\definecolor{lqt-darkgrey}{HTML}{63656A}
+
+\fancypagestyle{docs}{
+	\fancyhf{}
+  	\fancyfoot[LO]{
+    \makebox[0pt][r]{
+      \colorbox{lqt-lightblue}{
+        \makebox[\textwidth][r]{
+          \bfseries\sffamily\textcolor{white}{\thepage}
+        }
+      }\hspace{0em}
+    }}
+
+  \fancyfoot[RE]{
+    \makebox[0pt][l]{
+      \colorbox{lqt-lightblue}{
+        \makebox[\textwidth][l]{
+          \bfseries\sffamily\textcolor{white}{\thepage}\enskip
+        }
+      }\hspace{0em}
+    }}
+  \RenewDocumentCommand{\headrulewidth}{}{0pt}
+}
+
+
+
+\titleformat{\section}[frame]
+{\setlength\fboxrule{1.5pt}\color{lqt-lightblue}\normalfont}
+{\filright
+  \footnotesize
+  \enspace\sffamily\Huge\bfseries\thesection\enspace}
+{8pt}
+{\Large\bfseries\sffamily\color{lqt-lightblue}\filcenter}
+
+\titleformat{\subsection}[block]
+{\sffamily\large\bfseries}
+{\thesubsection}
+{8pt}
+{\filcenter}
+
+\titleformat{\subsubsection}[block]
+{\sffamily\bfseries}
+{}%{\thesubsubsection}
+{}
+{\filcenter}
+
+\RenewDocumentCommand{\thefootnote}{}{\sffamily\bfseries\arabic{footnote}}
+\RenewDocumentCommand{\theenumi}{}{\sffamily\bfseries\color{lqt-darkgrey}\arabic{enumi}}
+
+\renewenvironment{abstract}
+  {%
+    \begin{center}%
+      {\sffamily\bfseries\Large Abstract\par}%
+    \end{center}%
+    \vspace{1ex}%
+  }
+  {}
+
+\let\pkg\undefined
+\NewTotalTCBox{\pkg}{ O{lqt-red} v }{%
+  enhanced,
+  nobeforeafter,
+  tcbox raise base,
+  boxrule=0.4pt,
+  top=0mm,
+  bottom=0mm,
+  right=0mm,
+  left=4mm,
+  arc=1pt,
+  boxsep=2pt,
+  before upper={\vphantom{dlg}},
+  colframe=#1!50!black,
+  coltext=#1!25!black,
+  colback=#1!10!white,
+  overlay={%
+    \begin{tcbclipinterior}
+      \fill[#1!75!blue!50!white] (frame.south west) rectangle
+      node[text=white,font=\sffamily\bfseries\tiny,rotate=90] {PKG}
+      ([xshift=4mm]frame.north west);
+    \end{tcbclipinterior}
+  }%
+}{\ttfamily \small #2}
+
+%\let\cs\undefined
+\NewTotalTCBox{\cmd}{ O{lqt-green} v }{%
+  enhanced,
+  nobeforeafter,
+  tcbox raise base,
+  boxrule=0.4pt,
+  top=0mm,
+  bottom=0mm,
+  right=0mm,
+  left=4mm,
+  arc=1pt,
+  boxsep=2pt,
+  before upper={\vphantom{dlg}},
+  colframe=#1!50!black,
+  coltext=#1!25!black,
+  colback=#1!10!white,
+  overlay={%
+    \begin{tcbclipinterior}
+      \fill[#1!75!blue!50!white] (frame.south west) rectangle
+      node[text=white,font=\sffamily\bfseries\tiny,rotate=90] {CMD}
+      ([xshift=4mm]frame.north west);
+    \end{tcbclipinterior}
+  }%
+}{\ttfamily \small #2}
+
+\AtBeginDocument{
+\hypersetup{
+  colorlinks,
+  linkcolor=lqt-green,
+  urlcolor=lqt-green,
+  citecolor=lqt-red,
+  pdfauthor=Oliver Irwin,
+  pdftitle=liquidtex - latex with integrated Liquid templating,
+  pdfsubject=Documentation for the liquidtex package,
+  pdfkeywords={liquidtex,LaTeX,Liquid,package}
+}
+}
+
+\pagestyle{docs}
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../liquidtex"
+%%% End:
