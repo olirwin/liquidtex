@@ -3,10 +3,10 @@
 \subsection{Runtime configuration}
 \label{ssec:runtime-configuration}
 
-\begin{docCommand}{liquidsetup}{\marg{options}}
+\begin{docCommand}[doc new=2025-11-19]{liquidsetup}{\marg{options}}
   \index{setup}
   Applies changes to \pkg{liquidtex} configuration at runtime. %
-  The options tagged as \enquote{preamble only} (\preambleonly*) in
+  The options tagged as \enquote{preamble only} (\preambleonly) in
   \cref{sec:package-options} can only be used before the start of the
   document. %
 \end{docCommand}
@@ -24,78 +24,32 @@
 
 \subsection{Liquid template rendering}
 
-\verb+\inputliquid+
-\begin{verbatim}
-  \cs{inputliquid}\oarg{data file}\marg{template file}
-\end{verbatim}
+\begin{docCommand}[doc new=2025-11-19]{inputliquid}{\oarg{data
+      file}\marg{template file}}
+  This command will render a Liquid template and input the result. %
+  \begin{itemize}
+  \item \meta{template file}: mandatory path to a Liquid template;
+  \item \meta{data file}: optional override of the global \refKey{data} setting.
+  \end{itemize}
+\end{docCommand}
 
-Renders a Liquid template and inputs the resulting \LaTeX{} code.
-
-\paragraph{Arguments}
-\begin{itemize}
-  \item \meta{template file}: mandatory path to a Liquid template.
-  \item \meta{data file}: optional override of the global \texttt{data}
-        setting.
-\end{itemize}
-
-\paragraph{Caching}
-
-For each pair \marg{template}\marg{data}, the package generates a cache
-file whose name is derived from the base names of the sources:
-
-\begin{quote}
-  \verb|<outdir>/<template>+<data>.tex|
-\end{quote}
-
-If no data file is used, the name simplifies to:
-
-\begin{quote}
-  \verb|<outdir>/<template>.tex|
-\end{quote}
-
-A cache entry is considered \emph{fresh} when:
-
-\begin{itemize}
-  \item it exists, and
-  \item it is not older than the template file, and
-  \item if a data file is present, it is not older than that data file.
-\end{itemize}
-
-Freshness is checked using the \pkg{filemod} package.
-If the cache is fresh, the cached file is input directly; otherwise, the
-rendering engine is invoked and the result stored.
-
-\paragraph{Rendering}
-
-Currently, \cs{inputliquid} is implemented only for the
-\texttt{external} engine.  Rendering proceeds as follows:
-
-\begin{itemize}
-  \item The external executable is invoked through the system shell.
-  \item Shell escape must therefore be enabled.
-  \item The template, data file, and output path are passed according to
-        the configuration set by \texttt{engine-conf}.
-  \item Upon success, the generated file is stored in the cache
-        directory and immediately input.
-\end{itemize}
-
-\paragraph{Example}
-
-\begin{verbatim}
+\begin{dbexample}{Rendering templates with an external engine}{}
+\begin{preamblecode}
   \usepackage[
     engine      = external,
     engine-conf = { path = liquidtex-cli },
     data        = cv.yml,
     outdir      = .liquid-cache
-  ]{liquidtex}
-
+    ]{liquidtex}
+\end{preamblecode}
+\begin{bodycode}
   % Uses cv.yml
   \inputliquid{templates/header.liq}
 
   % Override data for this template
   \inputliquid[teaching.yml]{templates/teaching-entry.liq}
-\end{verbatim}
-
+\end{bodycode}
+\end{dbexample}
 %%% Local Variables:
 %%% mode: LaTeX
 %%% TeX-master: "../liquidtex"

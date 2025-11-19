@@ -8,7 +8,7 @@ the preamble or the document. %
 \begin{blockwarning}
   Some keys are restricted to preamble usage only. %
   When this is the case, the description of the key is marked with a
-  \preambleonly*{} symbol. %
+  \preambleonly{} symbol. %
 \end{blockwarning}
 
 \subsection{General options}
@@ -28,12 +28,12 @@ These options are used for the general configuration of \pkg{liquidtex}. %
   Disables the use of cache-rendered output.%
   \changes{v0.1.0}{2025-11-19}{Currently mis-functional}
 \end{docKey}
-\begin{docKey}{outdir}{=\meta{path}}{default: \meta{path}~\preambleonly*}
+\begin{docKey}[][doc description=\preambleonly]{outdir}{=\meta{path}}{default: \meta{path}}
   \index{output directory!configuration}
    Directory used to store rendered templates and cache files. %
 \end{docKey}
-\begin{docKey}{use-auxdir}{=\docValue{true}\textbar\docValue{false}}{default:
-    \docValue{true}, initial: \docValue{false}~\preambleonly*}%
+\begin{docKey}[][doc description=\preambleonly]{use-auxdir}{=\docValue{true}\textbar\docValue{false}}{default:
+    \docValue{true}, initial: \docValue{false}}%
   Indicates whether \refKey{outdir} should be interpreted relative to the
   engine’s auxiliary directory (e.g.\ under \meta{--auxdir} or
   \meta{--output-directory}). %
@@ -61,8 +61,8 @@ These options are used for the general configuration of \pkg{liquidtex}. %
 Liquid templates with different backends. %
 The rendering engine can be selected with: %
 
-\begin{docKey}{engine}{=\docValue{lua}\textbar\docValue{external}}{initial:
-    \docValue{external}~\preambleonly*}
+\begin{docKey}[][doc description=\preambleonly]{engine}{=\docValue{lua}\textbar\docValue{external}}{initial:
+    \docValue{external}}
   Chooses the rendering backend.
 
   \begin{itemize}
