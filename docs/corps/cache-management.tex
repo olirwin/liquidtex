@@ -1,0 +1,24 @@
+\section{Caching}
+\label{sec:caching}
+
+\subsection{Cache directory management}
+
+The cache directory stores all rendered template output files.
+
+\begin{itemize}
+  \item The directory is determined by \texttt{outdir}.
+  \item It is created automatically at \cmd{begin\{document\}}.
+  \item This requires shell escape, as directory creation uses
+        \cmd{sys_shell_now:n}.  If shell escape is disabled, the package
+        issues an error asking the user to create the directory manually.
+  \item When \texttt{no-cache} is set, cache lookup is disabled and
+        templates are always re-rendered.
+\end{itemize}
+
+Throughout the compilation, the package may emit diagnostic messages
+about cache usage when \texttt{verbose} is enabled.
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../liquidtex"
+%%% End:

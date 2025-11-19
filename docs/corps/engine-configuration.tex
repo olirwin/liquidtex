@@ -1,0 +1,56 @@
+\section{Engine Configuration}
+\label{sec:engine-configuration}
+
+\subsection{External engine}
+\label{ssec:external-engine-config}
+
+When \texttt{engine = external}, the external renderer must be configured
+via:
+
+\begin{description}
+
+  \item[\texttt{engine-conf = \meta{key--value list}}]
+    A subkey list describing the external renderer, for example:
+
+\begin{verbatim}
+  engine-conf = {
+    path           = /usr/bin/liquidtex-cli,
+    arg-style      = positional,
+    template-index = 1,
+    data-index     = 2,
+    output-index   = 3,
+  }
+\end{verbatim}
+
+Supported sub-keys:
+
+    \begin{description}
+
+      \item[\texttt{path = \meta{string}}]
+        Absolute or relative path to the external executable.
+        This is mandatory when using the external engine.
+
+      \item[\texttt{arg-style = positional \textbar{} named}]
+        Determines how command-line arguments are passed to the external
+        renderer.
+
+      \item[\texttt{positional \textbar{} named}]
+        As a (maybe temporary) shortcut for the \texttt{arg-style} key options.
+
+      \item[\texttt{template-index}, \texttt{data-index}, \texttt{output-index}]
+        When using positional argument style, these keys specify the
+        1-based positions of the template, data, and output file arguments.
+        Defaults: \texttt{1}, \texttt{2}, \texttt{3}.
+
+    \end{description}
+
+This option is restricted to the preamble.  If \texttt{engine = external}
+and no \texttt{path} is provided, the package raises an error at
+\cmd{\{document\}}.
+
+\end{description}
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../liquidtex"
+%%% End:
