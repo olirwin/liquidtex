@@ -89,6 +89,29 @@
   }
 
 
+%% ----------------------------------------------------------------------
+%%  cant-create-file
+%% ----------------------------------------------------------------------
+%%
+%%  Type: error
+%%
+%%  Arguments:
+%%    #1  The file path path that could not be created.
+%%
+%%  Meaning:
+%%    Raised when liquidtex fails to create a file and
+%%    shell escape is required (but not enabled). Suggests possible
+%%    solutions.
+%%
+\msg_new:nnn { liquidtex } { cant-create-file }
+  {
+    Creating~ `#1`~ failed.\\
+    Possible~ solutions~ include:~\\
+    ~\\
+    (1)~ enable~ `-shell-escape`~ flag;~\\
+    (2)~ check~ that~ you~ have~ permissions~ to~ create~ file;~ or~\\
+    (3)~ create~ `#1`~ manually.~\\
+  }
 
 %% ----------------------------------------------------------------------
 %%  cache-dir
@@ -107,6 +130,19 @@
     Using~ liquidtex~ cache~ directory~ `#1`.
   }
 
+
+%% ----------------------------------------------------------------------
+%%  tmp-debug-inline
+%% ----------------------------------------------------------------------
+%%
+%%  Type: info/log (typically verbose only)
+%%
+\msg_new:nnn { liquidtex } { tmp-debug-inline }
+  {
+    Inline~ template~ computed:~ #1.~\\
+    Base~ computed:~ #2.~\\
+  }
+  
 %% ----------------------------------------------------------------------
 %%  tmp-cache-dir
 %% ----------------------------------------------------------------------

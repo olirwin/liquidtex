@@ -54,6 +54,49 @@
   }
 }
 %
+%      Low-level helper: attempt to create file #1 using the OS shell.
+\cs_new_protected:Npn \__lqt_touch:n #1
+{
+  \sys_if_shell_unrestricted:TF
+  {
+    \sys_if_platform_windows:TF
+    {
+      % Windows: mkdir creates parents and succeeds if the directory exists.
+      \sys_shell_now:e { touch~ #1 }
+    }
+    {
+      % POSIX-like: use mkdir -p to create parents and ignore existing dir.
+      \sys_shell_now:e { touch~ #1 }
+    }
+  }
+  {
+    \msg_error:nnx { liquidtex } { cant-create-file } { #1 }
+  }
+}
+\cs_generate_variant:Nn \__lqt_touch:n { x }
+%
+
+%      Low-level helper: attempt to move file #1 to #2 using the OS shell.
+\cs_new_protected:Npn \__lqt_mv:nn #1#2
+{
+  \sys_if_shell_unrestricted:TF
+  {
+    \sys_if_platform_windows:TF
+    {
+      % Windows: mkdir creates parents and succeeds if the directory exists.
+      \sys_shell_now:e { mv~ #1~ #2 }
+    }
+    {
+      % POSIX-like: use mkdir -p to create parents and ignore existing dir.
+      \sys_shell_now:e { mv~ #1~ #2 }
+    }
+  }
+  {
+    \msg_error:nnx { liquidtex } { cant-create-file } { #2 }
+  }
+}
+\cs_generate_variant:Nn \__lqt_mv:nn { xx }
+%
 
 % Remove file #1
 \cs_new_protected:Npn \__lqt_remove_file:n #1
@@ -115,7 +158,8 @@
       \l__lqt_tmp_dir_tl
       #1
       \l__lqt_tmp_ext_tl
-  }
+}
+\cs_generate_variant:Nn \__lqt_get_file_base_name:nn { nx }
 
 % Check if cached file is fresh
 \prg_new_conditional:Npnn \__lqt_cache_is_fresh:nn #1#2 { T, F, TF }
@@ -221,6 +265,34 @@
     \tl_put_right:Nn \l__lqt_engine_log_file_tl { .log }
   }
 
+\cs_new_protected:Npn \__lqt_compute_inline_template_filename:
+{
+  % Compute template filename: <cache>/inline-<n>.liquid
+  \tl_set:Nx \l__lqt_inline_template_tl
+  {
+    \tl_use:N \__lqt_cache_dir_tl /
+    inline-\int_use:N \c__lqt_inlines_cnt_int .liquid
+  }
+}
+
+\cs_new_protected:Npn \__lqt_write_to_file:n #1
+{
+    \__lqt_get_file_base_name:nn \l__lqt_inline_tmp_tl {\tl_use:N
+      \l__lqt_inline_template_tl}
+    \tl_put_right:Nn \l__lqt_inline_tmp_tl { .liquid }
+    \msg_info:nnxx {liquidtex} {tmp-debug-inline}
+    {\tl_use:N \l__lqt_inline_template_tl}
+    {\tl_use:N \l__lqt_inline_tmp_tl}
+    \__lqt_touch:x {\tl_use:N \l__lqt_inline_tmp_tl}
+    % Open the file and write the body
+    \iow_open:Nn \l__lqt_inline_iow { \tl_use:N \l__lqt_inline_tmp_tl
+    }
+    \iow_now:Nn  \l__lqt_inline_iow { #1 }
+    \iow_close:N \l__lqt_inline_iow
+
+    \__lqt_mv:xx {\tl_use:N \l__lqt_inline_tmp_tl} {\tl_use:N
+      \l__lqt_inline_template_tl}
+}
 \ExplSyntaxOff
 %</package>
 %\Finale

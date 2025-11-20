@@ -384,6 +384,14 @@ Running "make install" installs the files in the local TeX tree.
 \int_new:N  \__lqt_engine_data_index_int
 \int_new:N  \__lqt_engine_output_index_int
 
+\tl_new:N   \l__lqt_inline_template_tl
+\tl_new:N   \l__lqt_inline_data_tl
+\tl_new:N   \l__lqt_inline_tmp_tl
+\iow_new:N  \l__lqt_inline_iow
+
+% Custom counters
+\int_new:N  \c__lqt_inlines_cnt_int
+
 % internal derived value: effective cache directory
 \tl_new:N   \__lqt_cache_dir_tl
 
@@ -530,6 +538,38 @@ Running "make install" installs the files in the local TeX tree.
       { \tl_use:N \l__lqt_tmp_template_tl }
       { \tl_use:N \l__lqt_tmp_data_tl }
   }
+
+\NewDocumentEnvironment { liquid } { O{} +b }
+  {
+    % #1 = optional data override / #2 = body (template contents)
+
+    % Increment inline counter
+    \int_gincr:N \c__lqt_inlines_cnt_int
+
+    % Get template cache filename
+    \__lqt_compute_inline_template_filename:
+
+    % Store the data argument (may be blank, meaning "use global data")
+    \tl_set:Nn \l__lqt_inline_data_tl { #1 }
+
+    \__lqt_write_to_file:n { #2 }
+
+    % Resolve which data file to use:
+    \tl_set:Nx \l__lqt_tmp_data_tl
+      {
+        \tl_if_blank:VTF \l__lqt_inline_data_tl
+          { \__lqt_data_path_tl } % fall back to global 'data' key
+          { \l__lqt_inline_data_tl }
+      }
+
+    % Now just reuse your existing pipeline:
+    \__lqt_input_liquid:nn
+      { \tl_use:N \l__lqt_inline_template_tl }
+      { \tl_use:N \l__lqt_tmp_data_tl }
+  }
+  {}
+
+
   
 %    \end{macrocode}
 %    \begin{macrocode}
