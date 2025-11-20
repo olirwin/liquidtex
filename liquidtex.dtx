@@ -503,6 +503,9 @@ Running "make install" installs the files in the local TeX tree.
 % \subsection{Liquid rendering}
 %    \begin{macrocode}
 
+% -------------------------------------------------------------------------
+%                       INTERNAL INTERFACE HANDLING
+% -------------------------------------------------------------------------
 
 \cs_new_protected:Npn \__lqt_input_liquid:nn #1#2
   {
@@ -524,34 +527,20 @@ Running "make install" installs the files in the local TeX tree.
       }
   }
 
-\NewDocumentCommand \inputliquid { O{} m }
-  {
-    % #1 = optional data override, #2 = template
-    \tl_set:Nn \l__lqt_tmp_template_tl { #2 }
-    \tl_set:Nx \l__lqt_tmp_data_tl
-      {
-        \tl_if_blank:nTF { #1 }
-          { \__lqt_data_path_tl }
-          { #1 }
-      }
-    \__lqt_input_liquid:nn
-      { \tl_use:N \l__lqt_tmp_template_tl }
-      { \tl_use:N \l__lqt_tmp_data_tl }
-  }
-
-\NewDocumentEnvironment { liquid } { O{} +b }
-  {
-    % #1 = optional data override / #2 = body (template contents)
-
+% Internal handler for inline inputs
+% #1 is the optional data argument
+% #2 is the contents of the template
+\cs_new_protected:Npn \__lqt_inline_input:nn #1#2
+{
     % Increment inline counter
     \int_gincr:N \c__lqt_inlines_cnt_int
 
     % Get template cache filename
     \__lqt_compute_inline_template_filename:
 
-    % Store the data argument (may be blank, meaning "use global data")
     \tl_set:Nn \l__lqt_inline_data_tl { #1 }
 
+    % Store template in cache file
     \__lqt_write_to_file:n { #2 }
 
     % Resolve which data file to use:
@@ -562,15 +551,44 @@ Running "make install" installs the files in the local TeX tree.
           { \l__lqt_inline_data_tl }
       }
 
-    % Now just reuse your existing pipeline:
-    \__lqt_input_liquid:nn
-      { \tl_use:N \l__lqt_inline_template_tl }
-      { \tl_use:N \l__lqt_tmp_data_tl }
+}
+
+
+% -------------------------------------------------------------------------
+%                            USER INTERFACE
+% -------------------------------------------------------------------------
+
+
+\NewDocumentCommand \inputliquid { O{} m } {%
+  % #1 = optional data override, #2 = template
+  \tl_set:Nn \l__lqt_tmp_template_tl { #2 }
+  \tl_set:Nx \l__lqt_tmp_data_tl { %
+    \tl_if_blank:nTF { #1 }
+    { \__lqt_data_path_tl }
+    { #1 }
   }
-  {}
 
+  \__lqt_input_liquid:nn
+  { \tl_use:N \l__lqt_tmp_template_tl }
+  { \tl_use:N \l__lqt_tmp_data_tl }
+}
 
-  
+\NewDocumentEnvironment { liquid } { O{} +b } { %
+  \__lqt_inline_input:nn { #1 } { #2 } %
+
+  \__lqt_input_liquid:nn %
+  { \tl_use:N \l__lqt_inline_template_tl } %
+  { \tl_use:N \l__lqt_tmp_data_tl } %
+}{} %
+
+\NewDocumentCommand{\liquidinline}{ O{} m }{%
+  \__lqt_inline_input:nn { #1 } { #2 } %
+
+  \__lqt_input_liquid:nn %
+  { \tl_use:N \l__lqt_inline_template_tl } %
+  { \tl_use:N \l__lqt_tmp_data_tl } %
+}
+
 %    \end{macrocode}
 %    \begin{macrocode}
 \AtBeginDocument{ %
