@@ -353,15 +353,61 @@
   }
 
 %% ----------------------------------------------------------------------
-%% Logging functions
+%%  default-data-missing
 %% ----------------------------------------------------------------------
-\cs_new_protected:Nn \__lqt_log:n { %
-  \bool_if:NT \__lqt_verbose_bool %
-  { %
-    \msg_info:nn %
-    { liquidtex } { #1 } %
-  } %
-} %
+%%
+%%  Type: error
+%%
+%%  Meaning:
+%%    Raised when no default data can be retrieved from the configuration.
+%%
+\msg_new:nnn { liquidtex } { default-data-missing }
+{
+  No~ default~ data~ found.~\\
+  This~ should~ *not*~ happen.~\\
+  ~\\
+  Check~ your~ `liquidtex`~ config~ and~ add~ a~ default~ data~ file.~
+}
+
+%% ----------------------------------------------------------------------
+%%  redefining-data
+%% ----------------------------------------------------------------------
+%%
+%%  Type: warning
+%%
+%%  Arguments:
+%%    #1  Data source key being redefined
+%%
+%%  Meaning:
+%%    Warning when the user redefines a data source key
+%%
+\msg_new:nnn { liquidtex } { redefining-data } { %
+  Data~ source~ key~ `#1`~ already~ defined,~ liquidtex~ will~
+  overwrite.~\\ %
+  Redefinition~ occurs~ \msg_line_context: ~.
+}
+
+%% ----------------------------------------------------------------------
+%%  resolve-data-source
+%% ----------------------------------------------------------------------
+%%
+%%  Type: info/log
+%%
+%%  Arguments:
+%%    #1  data source key
+%%    #2  data source file resolved
+%%
+%%  Meaning:
+%%    Informational message about data source resolving
+%%
+\msg_new:nnn { liquidtex } { resolve-data-source } { %
+  \IfBlankTF{#2}{ %
+    Matching~ key~ `#1`.~
+  }{ %
+    Matched~ key~ `#1`~ with~ path~ `#2`.~
+  }
+}
+
 \ExplSyntaxOff
 %</package>
 %\Finale

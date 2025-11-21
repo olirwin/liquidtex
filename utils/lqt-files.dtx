@@ -265,8 +265,7 @@
     \tl_put_right:Nn \l__lqt_engine_log_file_tl { .log }
   }
 
-\cs_new_protected:Npn \__lqt_compute_inline_template_filename:
-{
+\cs_new_protected:Npn \__lqt_compute_inline_template_filename: { %
   % Compute template filename: <cache>/inline-<n>.liquid
   \tl_set:Nx \l__lqt_inline_template_tl
   {
@@ -275,24 +274,51 @@
   }
 }
 
-\cs_new_protected:Npn \__lqt_write_to_file:n #1
-{
-    \__lqt_get_file_base_name:nn \l__lqt_inline_tmp_tl {\tl_use:N
-      \l__lqt_inline_template_tl}
-    \tl_put_right:Nn \l__lqt_inline_tmp_tl { .liquid }
-    \msg_info:nnxx {liquidtex} {tmp-debug-inline}
-    {\tl_use:N \l__lqt_inline_template_tl}
-    {\tl_use:N \l__lqt_inline_tmp_tl}
-    \__lqt_touch:x {\tl_use:N \l__lqt_inline_tmp_tl}
-    % Open the file and write the body
-    \iow_open:Nn \l__lqt_inline_iow { \tl_use:N \l__lqt_inline_tmp_tl
-    }
-    \iow_now:Nn  \l__lqt_inline_iow { #1 }
-    \iow_close:N \l__lqt_inline_iow
-
-    \__lqt_mv:xx {\tl_use:N \l__lqt_inline_tmp_tl} {\tl_use:N
-      \l__lqt_inline_template_tl}
+\cs_new_protected:Npn \__lqt_compute_inline_data_filename: { %
+  % Compute template filename: <cache>/data-<n>.yml
+  \tl_set:Nx \l__lqt_inline_data_file_tl
+  {
+    \tl_use:N \__lqt_cache_dir_tl /
+    data-\int_use:N \c__lqt_inline_data_cnt_int .yml
+  }
 }
+
+\cs_new_protected:Npn \__lqt_write_to_cache_file:Vn #1#2 { %
+  \__lqt_get_file_base_name:nn \l__lqt_tmp_filename_tl { #1 } %
+  \tl_put_right:Nn \l__lqt_tmp_filename_tl { .tmp }
+  \bool_if:NT \__lqt_verbose_bool { %
+    \msg_info:nnxx {liquidtex} {tmp-debug-inline} %
+    {\tl_use:N #1} %
+    {\tl_use:N \l__lqt_tmp_filename_tl} %
+  }
+
+  \__lqt_touch:x {\tl_use:N \l__lqt_tmp_filename_tl} %
+  \iow_open:Nn \l__lqt_cache_iow { \tl_use:N \l__lqt_tmp_filename_tl } %
+  \iow_now:Nn \l__lqt_cache_iow { #2 } %
+  \iow_close:N \l__lqt_cache_iow %
+
+  \__lqt_mv:xx {\tl_use:N \l__lqt_tmp_filename_tl} { #1 } %
+}
+
+
+% \cs_new_protected:Npn \__lqt_write_to_file:n #1
+% {
+%     \__lqt_get_file_base_name:nn \l__lqt_inline_tmp_tl {\tl_use:N
+%       \l__lqt_inline_template_tl}
+%     \tl_put_right:Nn \l__lqt_inline_tmp_tl { .liquid }
+%     \msg_info:nnxx {liquidtex} {tmp-debug-inline}
+%     {\tl_use:N \l__lqt_inline_template_tl}
+%     {\tl_use:N \l__lqt_inline_tmp_tl}
+%     \__lqt_touch:x {\tl_use:N \l__lqt_inline_tmp_tl}
+%     % Open the file and write the body
+%     \iow_open:Nn \l__lqt_inline_iow { \tl_use:N \l__lqt_inline_tmp_tl
+%     }
+%     \iow_now:Nn  \l__lqt_inline_iow { #1 }
+%     \iow_close:N \l__lqt_inline_iow
+
+%     \__lqt_mv:xx {\tl_use:N \l__lqt_inline_tmp_tl} {\tl_use:N
+%       \l__lqt_inline_template_tl}
+% }
 \ExplSyntaxOff
 %</package>
 %\Finale
