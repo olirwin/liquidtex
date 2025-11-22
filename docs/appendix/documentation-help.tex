@@ -1,7 +1,7 @@
 \section{How to read this documentation}
 \label{sec:documentation-help}
 
-\subsection{Mandatory Elements}
+\subsection*{Mandatory elements}
 \label{sec:mandatory-comm}
 \index{mandatory element}%
 
@@ -12,13 +12,35 @@ While the absence of some of these parameters might not stop your
 compilation, it is not a guarantee that the rendering of all the templates
 was executed correctly. %
 
-\subsection{Preamble-Only Elements}
+\subsection*{Preamble-only elements}
 \label{sec:preamble-only}
 \index{preamble-only element}
 
 The \preambleonly{} icon shown next to some elements indicates that these
 should only be set in the document's preamble, and therefore not in the
 main body. %
+
+\subsection*{Code examples}
+\label{sec:code-examples}
+
+This documentation presents multiple code examples. %
+When relevant, a distinction is made between code that should go in the
+\docAuxEnvironment*{preamble} of the document, and code that should go in the
+\docAuxEnvironment*{body}. %
+
+Preamble code is shown formatted in a grey, shadowed box, as such: %
+\begin{preamblecode}
+  \hypersetup{hidelinks} % In the preamble
+\end{preamblecode}
+
+Code that is meant for the main document code is formatted in a blue box,
+as such: %
+
+\begin{bodycode}
+  \section{Introduction}
+
+  This is regular section text.
+\end{bodycode}
 
 %%% Local Variables:
 %%% mode: LaTeX

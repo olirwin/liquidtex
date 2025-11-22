@@ -660,6 +660,30 @@
   },%
   sensitive%
 }[keywords,tex,comments]%
+\lstdefinelanguage[lqt]{TeX}[LaTeX]{TeX}{%
+  moretexcs={% Control sequences' names
+    inputliquid,liquiddatasource,liquidinline,liquidsetup
+  },%
+  % Environments' names
+  morekeywords={%
+    liquidtex%
+  },%
+  morekeywords=[1]{% Environments' names
+    liquid,liquiddata
+  },%
+  morekeywords=[2]{% Keys of key-value lists
+    verbose,no-cache,outdir,use-auxdir,data,data-sources,engine,%
+    engine-conf,path,arg-style,named,positional,template-index,data-index,%
+    output-index%
+  },%
+  morekeywords=[3]{% Values of key-value lists
+    true,false,lua,external%
+  },%
+  morekeywords=[4]{% Class and packages options
+  },%
+  morekeywords=[5]{% Translation labels
+  }%
+}%
 \lstdefinelanguage[yad]{TeX}[LaTeX]{TeX}{%
   moretexcs={% Control sequences' names
     author,title,subtitle,academicfield,speciality,date,supervisor,cosupervisor,comonitor,%
@@ -818,7 +842,7 @@
 {%
   morekeywords={%
     ssh-keygen,rsa,mkdir,cp,chmod,git,clone,tree,pull,lgr,lga,commit,%
-    ls,add,record,push%
+    ls,add,record,push,usr/bin/liquid-cli%
   },%
   alsoletter={!-*}%
 }%
@@ -1196,6 +1220,38 @@
       \textsuperscript{#1}
     }
   }
+   \cs_new_protected:Nn \__see_section:nn
+   { \hyperref[#1]{%
+       \textcolor{black}{#2}
+        \group_begin:
+        % Only do anything if the label exists
+        \cs_if_exist:cTF { r@#1 }
+          {
+            % Current page as text
+            \tl_set:Nx \l_tmpa_tl { \thepage }
+            % Referenced page as text (whatever representation: roman, arabic…)
+            \tl_set:Nx \l_tmpb_tl { \pageref*{#1} }
+            % If they are NOT equal, add arrow + page
+            \tl_if_eq:NNF \l_tmpa_tl \l_tmpb_tl { %
+              \__denisbdoc_deal_with_superiors:n { %
+                \__denisbdoc_arrow:{}\,\kvtcb@text@pageshort\,\pageref*{#1}
+              } %
+            } %
+          } %
+          {} %
+          \group_end: %
+        }%
+      } \RenewDocumentCommand\tcb@ref@doc{msm}{%
+        \hyperref[#1:#3]{\texttt{\ref*{#1:#3}}%
+          \IfBooleanTF{#2}{}{%
+            \ifnum\getpagerefnumber{#1:#3}=\thepage\relax%
+            \else%
+              \__denisbdoc_deal_with_superiors:n{\__denisbdoc_arrow:{}%
+                \,\kvtcb@text@pageshort\,\pageref*{#1:#3}}%
+            \fi}}%
+      } \NewDocumentCommand{\seesection}{ m m } { \__see_section:nn { #1 }
+        { #2 } }%
+
     \cs_new_protected:Nn \__preamble_only:
   {
     \hyperref[sec:preamble-only]{%
@@ -1432,6 +1488,8 @@
 \NewTCBListing{preamblecode}{ !O{} }{%
   codes,%
   drop~lifted~shadow,
+  colback=lqt-lightgrey,
+  colframe=lqt-darkgrey,
   #1%
 }
 \NewTCBListing{preamblecode*}{ !O{} }{%
@@ -1491,8 +1549,8 @@
   \IfLanguageName{english}{\tl_const:Nn \c__denisbdoc_example_title_tl {example}}{}%
 }%
 \newtcbtheorem[list~inside=dbexamplelist,number~within=\g__denisbdoc_number_within_tl,crefname={\c__denisbdoc_example_title_tl}{\c__denisbdoc_example_title_tl s}]{dbexample}{\text_titlecase:n\c__denisbdoc_example_title_tl}{%
-  colback=lime!5!white,
-  colframe=lime!75!black,
+  colback=lqt-lightgreen!5!white,
+  colframe=lqt-lightgreen!75!black,
   dbtcb,
 }{ex}
 \IfLanguageName{french}{\tl_const:Nn \c__denisbdoc_remark_title_tl {remarque}}{
@@ -1692,7 +1750,7 @@
   escapechar=",%"
   language=[LaTeX]TeX,
   alsolanguage=[extLaTeX]TeX,
-  % alsolanguage=[glossaries]TeX,
+  alsolanguage=[lqt]TeX,
   % alsolanguage=[biblatex]TeX,
   alsolanguage=[csquotes]TeX,
   % alsolanguage=[tcolorbox]TeX,
@@ -1725,6 +1783,7 @@
   \lstdefinestyle{dbtex}{%
     style=pre-dbtex,%
     alsolanguage=[yad]TeX,%
+    alsolanguage=[lqt]TeX,%
     alsolanguage=[colophon]TeX,%
     moretexcs={printbibliography,autocite},%
     morekeywords=[2]{%
@@ -1763,7 +1822,7 @@
 \NewDocumentCommand{\Thisclass}{}{\Class{\g_tmpa_tl}}
 \tcbset{dbtcb/.style={%
     breakable,
-    fonttitle=\bfseries,
+    fonttitle=\bfseries\sffamily,
     enlarge~top~by=1mm,
     separator~sign~dash,
     label~separator=-,
@@ -1783,7 +1842,7 @@
     % colframe=red!50!black,%
     interior~style={%
       fill,%
-      color=yellow!10!white,%
+      color=lqt-yellow!10!white,%
     }%
   }%
 }
@@ -1812,7 +1871,7 @@
     enlarge~top~by=\medskipamount,
     colframe=ExampleFrame,
     colback=ExampleBack,
-    fonttitle=\bfseries,
+    fonttitle=\bfseries\sffamily,
     fontupper=\small,
     split=0.5,
     enhanced,

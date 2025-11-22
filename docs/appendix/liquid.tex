@@ -1,0 +1,53 @@
+\section{Liquid Templates}
+\label{app:liquid-templates}
+
+\href{https://shopify.github.io/liquid}{\sffamily Liquid} is a lightweight,
+text-oriented templating language designed to separate \emph{content} from
+\emph{presentation}. %
+Rather than embedding data or logic directly in a document, Liquid allows
+the writer to design a template that describes the structure of the final
+output, while delegating the actual content to external data sources such
+as \seesection{app:yaml}{\YAML} or \JSON{} files. %
+During rendering, a Liquid engine combines the template and the data to
+produce a complete, fully expanded document. %
+
+\medskip
+
+A Liquid \emph{template} consists of ordinary text enriched with a set of
+tag types. %
+These tags make it possible to insert values, perform conditional
+operations, iterate over collections, and apply simple transformations. %
+
+\begin{itemize}
+  \item \textbf{Output tags} (e.g.\ \liq{{{ title }}}) insert
+        the value of a variable directly into the document.
+  \item \textbf{Logic tags} enable conditional inclusion of
+    content, e.g.:
+\begin{lqdblock}
+{% if x > 0 %}
+ ...
+{% endif %}
+\end{lqdblock}
+  \item \textbf{Iteration tags} repeat a block of text for
+    each element of a sequence, e.g.:
+\begin{lqdblock}
+{% for book in books %}
+  {{ book.title }} ({{ book.author }})
+{% endfor %}
+\end{lqdblock}
+  \item \textbf{Filters} (e.g.\ \liq{{{ name | upcase }}}) apply
+        simple transformations to values before insertion.
+\end{itemize}
+
+\medskip
+
+Liquid is of course a lot more powerful than these examples, and the
+interested reader will find a full reference of the templating system here:
+\begin{center}
+  \url{https://shopify.github.io/liquid/}
+\end{center}
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../liquidtex"
+%%% End:

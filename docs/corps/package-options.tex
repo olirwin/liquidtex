@@ -45,13 +45,19 @@ These options are used for the general configuration of \pkg{liquidtex}. %
 \subsection{Template data}
 \label{ssec:template-data-options}
 
-\begin{docKey}{data}{=\meta{path}}{\mandatory} %
+\begin{docKey}[][doc description=\mandatory]{data}{=\meta{path}}{} %
   Sets the default data source used when rendering templates. %
-  The value may be overridden for individual calls of
-  \refCom{inputliquid}. %
   No default value is set, but this parameter should be set at some point
   before rendering templates\footnote{otherwise, there is no real meaning to
     the operation of \emph{rendering} a template of course}. %
+\end{docKey}
+\begin{docKey}[][doc new=2025-11-21]{data-sources}{=\meta{options}}{} %
+  Sets different data sources to be used throughout the document. %
+  The \meta{options} are passed as a key-value collection where the key is
+  the alias of the data source and the key is the path to the file. %
+
+  The data sourced passed with \refKey{data} is stored as
+  \docValue{default} and can be overriden. %
 \end{docKey}
 
 \subsection{Engine selection}

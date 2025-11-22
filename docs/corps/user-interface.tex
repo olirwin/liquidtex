@@ -1,55 +1,177 @@
 \section{User interface}
 \label{sec:user-interface}
+
+The user interface for this package was designed to be easy to use and
+place in various documents. %
+This section presents the different user-side commands available to the
+writer. %
+
 \subsection{Runtime configuration}
 \label{ssec:runtime-configuration}
 
+\lqt{} can be configured by options passed while loading the package or
+later. %
+
 \begin{docCommand}[doc new=2025-11-19]{liquidsetup}{\marg{options}}
   \index{setup}
+  \index{global configuration}
   Applies changes to \pkg{liquidtex} configuration at runtime. %
   The options tagged as \enquote{preamble only} (\preambleonly) in
   \cref{sec:package-options} can only be used before the start of the
   document. %
+  Most of the package options can be passed to this command to set or alter
+  the initial configuration of the package. %
+  Options are passed by key--value pairs. %
 \end{docCommand}
 
-\begin{dbexample}{Setting configuration values in preamble}{}
+\begin{dbexample}{Setting configuration values in preamble}{ui-configuration}
   \begin{preamblecode}
     \liquidsetup{
       outdir = .liquid-cache,
-      use-auxdir = false,
       verbose = true,
       data = info.yml
+      data-sources = {
+        cv = data/resume.yml,
+        questions = data/notes-on-lecture.yml
+      }
     }
   \end{preamblecode}
+
+  In this example, we set \emph{three} separate data sources\index{data
+    source}: the first, set with \refKey{data} will serve as the default
+  source, the other two can also be used to render templates in the
+  document by using their alias. %
+
+  More information about the available options and their use can be found
+  in \cref{sec:package-options}. %
 \end{dbexample}
+
+\begin{docCommand}[doc
+  new=2025-11-21]{liquiddatasource}{\marg{alias}\marg{path}}{}
+  \index{inline!data source}
+  Declares a named data source\index{data source}. %
+  The \meta{alias} is a symbolic identifier (for example, \texttt{default},
+  \texttt{cv}, or \texttt{questions} from \cref{ex-ui-configuration}), and
+  \meta{path} is the path to the corresponding data
+  file\footnote{typically, this would be a \seesection{app:yaml}{\sffamily YAML} or
+    a {\sffamily JSON} document, but
+    this depends on your engine, see \cref{sec:engine-configuration}.}. %
+  This is completely equivalent to adding the pair
+  \meta{alias}\lstinline+ = +\meta{path} to the \refKey{data-sources}
+  option. %
+
+  Once a data source is declared, it can be referred to by name in the
+  optional arguments of package commands such as \refCom{inputliquid},
+  \refCom{liquidinline}, or of the \refEnv{liquid} environment. %
+
+  \begin{blockwarning}
+    If \meta{alias} is already defined, then it will be \textbf{replaced} by the
+    new definition. %
+    No smart system is currently implemented to append information to a
+    data source. %
+    The special name \docAuxKey*{default} can also be used to redefine the
+    default source if needed. %
+  \end{blockwarning}
+\end{docCommand}
+
+\clearpage
+\subsection{Inline data}
+
+\lqt{} supports the supply of a \enquote{local} data source with the
+\refEnv{liquiddata} environment. %
+
+\begin{docEnvironment}[doc
+  new=2025-11-21,doclang/environment content=inline
+  data]{liquiddata}{\marg{alias}}
+  \index{data!inline}
+  \index{yaml}
+  The \meta{alias} parameter will be the alias to reference this data
+  source. %
+  Using \docAuxKey*{default} will replace the default data. %
+
+  The \meta{inline data} is treated as \texttt{verbatim}. %
+  It should contain data in a valid format with respect to your data
+  type. %
+  As of \vsn{0.2.0}, the only supported inline data format is
+  \seesection{app:yaml}{\sffamily YAML}. %
+\end{docEnvironment}
 
 \subsection{Liquid template rendering}
 
-\begin{docCommand}[doc new=2025-11-19]{inputliquid}{\oarg{data
+There are multiple possibilities in \lqt{} to render templates. %
+
+\begin{docCommand}[doc updated=2025-11-21]{inputliquid}{\oarg{alias{~\rm\textbar~}data
       file}\marg{template file}}
+  \index{template!render}
   This command will render a Liquid template and input the result. %
-  \begin{itemize}
-  \item \meta{template file}: mandatory path to a Liquid template;
-  \item \meta{data file}: optional override of the global \refKey{data} setting.
-  \end{itemize}
+
+  The \meta{template file} argument is mandatory and is the path to the
+  Liquid template to render. %
+
+  \refCom{inputliquid} also accepts an optional argument that specifies the
+  data source\index{data source} to use. %
+  If empty, it will use the \docAuxKey*{default} source. %
+  If passed, \lqt{} will attempt to resolve it as a saved alias and then as
+  a path to a data file if it cannot be found. %
 \end{docCommand}
 
-\begin{dbexample}{Rendering templates with an external engine}{}
+A basic example can be found in \cref{ex:ui:rendering-inputliquid}, more
+detailed examples can be found in \cref{app:examples}. %
+
+\begin{dbexample}[label=ex:ui:rendering-inputliquid]{Rendering templates with an external engine}{}
 \begin{preamblecode}
   \usepackage[
-    engine      = external,
-    engine-conf = { path = liquidtex-cli },
-    data        = cv.yml,
-    outdir      = .liquid-cache
+    engine       = external,
+    engine-conf  = { path = liquidtex-cli },
+    data         = cv.yml,
+    data-sources = { random = data/facts.yml },
+    outdir       = .liquid-cache
     ]{liquidtex}
 \end{preamblecode}
 \begin{bodycode}
-  % Uses cv.yml
-  \inputliquid{templates/header.liq}
+  % Uses default source -> cv.yml
+  \inputliquid{templates/header.liquid}
 
-  % Override data for this template
-  \inputliquid[teaching.yml]{templates/teaching-entry.liq}
+  % Override data locally with known source
+  \inputliquid[random]{templates/some-things.liquid}
+
+  % Override data locally with file `teaching.yml`
+  \inputliquid[teaching.yml]{templates/teaching-entry.liquid}
 \end{bodycode}
 \end{dbexample}
+
+A user can also use \emph{inline templating}. %
+To this end, two commands are available: %
+
+\begin{docCommand}[doc
+  new=2025-11-21]{liquidinline}{\oarg{alias{~\rm\textbar~}data path}}{}
+  \index{inline!template!render}
+
+  The optional argument \meta{alias{~\rm\textbar~}data path} is used to
+  choose a non-default data source. %
+  It is resolved as an alias first, then, if not found, as an external file
+  path. %
+
+  The \meta{template} is a \seesection{app:liquid-templates}{valid Liquid
+    template}. %
+\end{docCommand}
+
+\clearpage
+
+\begin{docEnvironment}[doc
+  new=2025-11-21,doclang/environment
+  content=template]{liquid}{\oarg{alias{~\rm\textbar~}data path}}
+  \index{inline!template!render}
+
+  The optional argument \meta{alias{~\rm\textbar~}data path} is used to
+  choose a non-default data source. %
+  It is resolved as an alias first, then, if not found, as an external file
+  path. %
+
+  The \meta{template} is a  \seesection{app:liquid-templates}{valid Liquid
+    template}. %
+\end{docEnvironment}
+
 %%% Local Variables:
 %%% mode: LaTeX
 %%% TeX-master: "../liquidtex"

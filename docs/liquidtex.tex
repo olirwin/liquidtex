@@ -4,31 +4,38 @@
 
 \input{utils/doc-macros}
 
-\def\liquidtexversion{0.1.0}
-\def\liquidtexdate{2025-11-19}
+\def\liquidtexversion{0.2.0}
+\def\liquidtexdate{2025-11-21}
 
 \makeindex[title=Index des concepts,extout=pdx,extin=pnd,columnseprule]
 
 \begin{document}
+\frontmatter
 \input{utils/doc-title}
-\stoptoc
-\thispagestyle{empty}
-\tableofcontents
+\input{corps/aknowledgments}
 \clearpage
+\stoptoc
+\tableofcontents
 \resumetoc
-\setcounter{page}{1}
+\mainmatter
+\input{corps/user-interface}
+\clearpage
 \input{corps/package-options}
 \clearpage
 \input{corps/engine-configuration}
 \clearpage
-\input{corps/user-interface}
-\clearpage
 \input{corps/cache-management}
 \cleardoublepage
+\backmatter
 \appendix
+\crefalias{section}{appendix}
 \input{appendix/documentation-help}
 \clearpage
-\input{appendix/about}
+\input{appendix/examples}
+\clearpage
+\input{appendix/liquid}
+\clearpage
+\input{appendix/yaml}
 % \PrintChanges
 % \renewcommand{\indexname}{Index des commandes}
 % \printindex[\jobname-commands]
