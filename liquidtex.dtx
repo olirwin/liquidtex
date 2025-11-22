@@ -212,8 +212,8 @@ time.
 \fi
 %</internal>
 %<*package|install>
-\def\liquidtexversion{0.1.0}
-\def\liquidtexdate{2025-11-12}
+\def\liquidtexversion{0.2.0}
+\def\liquidtexdate{2025-11-21}
 %</package|install>
 %<*install>
 \input l3docstrip.tex
@@ -301,6 +301,12 @@ Running "make install" installs the files in the local TeX tree.
     \from{utils/lqt-engine-external.dtx}{package}%
     \from{utils/lqt-engine-external.dtx}{postamble}%
   }
+  \file{lqt-data.sty}{%
+    \usepreamble\utilpreamble\usepostamble\utilpostamble
+    \from{utils/lqt-data.dtx}{preamble}%
+    \from{utils/lqt-data.dtx}{package}%
+    \from{utils/lqt-data.dtx}{postamble}%
+  }
 }
 %</install>
 %<install>\endbatchfile
@@ -325,7 +331,6 @@ Running "make install" installs the files in the local TeX tree.
 %<*driver>
 \documentclass[full,british]{l3doc}
 \usepackage[a4paper,margin=25mm,left=50mm,nohead]{geometry}
-\usepackage[yad]{denisbdoc}
 \OnlyDescription
 \DisableImplementation
 \EnableCrossrefs
@@ -356,273 +361,6 @@ Running "make install" installs the files in the local TeX tree.
 %
 %
 %   \GetFileInfo{\jobname.dtx}
-%   \DoNotIndex{%
-%   \newcommand,\newenvironment,\begin,\end,\acrpluralsuffix,\acrshort,\active,\addlinespace,\advance,\AtEndDocument,\begingroup,\caption,\catcode,\ClassInfo,\color,\colorlet,\cr,\DeclareGraphicsExtensions,\declaretheorem,\declaretheoremstyle,\def,\definecolor,\do,\edef,\else,\emph,\endgroup,\endVerbatimOut,\expandafter,\fi,\floatsetup,\footnotesize,\gls,\glsentrylong,\glspluralsuffix,\glsshorttok,\graphicspath,\hide,\ifluatex,\includegraphics,\InputIfFileExists,\intertitle,\killienc,\label,\LaTeX,\linewidth,\LoadClass,\loadglsentries,\lstinputlisting,\lstMakeShortInline,\lstset,\LTXtable,\makeglossaries,\mdfdefinestyle,\mdfsetup,\medskipamount,\meta,\multicolumn,\noexpand,\normalfont,\nothing,\PassOptionsToClass,\PassOptionsToPackage,\ProcessOptions,\protect,\raisebox,\relax,\renewcommand,\RequirePackage,\temp,\TeX,\textbf,\textlangle,\textrangle,\textsc,\textsf,\texttt,\textup,\the,\tmp,\to,\todoformat,\todos,\ttdefault,\ttfamily,\typeout,\uccode,\uppercase,\VerbatimOut,\WithSuffix,\LoadClassWithOptions,\DeclareOption,\xspace,\undefined,\newif,\nothtfalse,\nothttrue,\HCode,\ifnotht,\ifx,\@bsphack}
-%   \DoNotIndex{%
-%   \@documentclasshook,\@empty,\@esphack,\@tempa,\\,\actualchar,\baselineskip,\boolean,\c@CodelineNo,\c@HD@hypercount,\count@,\Describe@Option,\Describe@ShortCut,\encapchar,\endoption,\endshortcut,\endtrivlist,\equal,\fvset,\g@addto@macro,\global,\hbox,\HD@target,\HDorg@encapchar,\hologo,\if@inlabel,\ignorespaces,\index,\input,\item,\leavevmode,\let,\levelchar,\llap,\long,\loop,\Lsmcp,\lstdefinestyle,\lstnewenvironment,\m@cro@YT,\m@ne,\macro@cnt,\MacroTopsep,\makelabel,\MakePrivateLetters,\marginnote,\marginpar,\newboolean,\nobreak,\or,\PackageWarning,\PrintDescribeEnv,\PrintDescribeOption,\PrintDescribeShortCut,\PrintEnvName,\PrintOptionName,\PrintShortCutName,\ProvidesFile,\raggedleft,\repeat,\reversedvideodbend,\saved@macroname,\setboolean,\sffamily,\shortcut,\space,\special@index,\SpecialMainOptionIndex,\SpecialMainShortCutIndex,\SpecialOptionIndex,\SpecialShortCutIndex,\string,\strut,\textbelow,\textsl,\topsep,\trivlist,\VerbatimEnvironment,\vss,\vtop,\xspaceaddexceptions,\par}
-%
-% \DoNotIndex{\@cclvi,\@ne,\@tempcnta,\@whilenum,\toks@,\z@}
-%
-% \DoNotIndex{\addbibresource,\biolinumKeyGlyph,\DeclareRobustCommand,\ClassWarning,\DescribeOption,\DescribeShortCut,\ifcase,\ifnum,\ifthenelse,\option,\pagestyle}
-% \DoNotIndex{\newcommand,\newenvironment}
-%
-% \def\liquidtexversion{0.1.0}
-% \def\liquidtexdate{2025-11-13}
-%
-%\title{\textsf{liquidtex} --- \LaTeX{} with integrated Liquid templating\thanks{This file
-%   describes version \liquidtexversion, last revised \liquidtexdate.}
-%}
-%\author{Oliver Irwin\thanks{E-mail: oliver@irwin.sh}}
-%\date{\liquidtexdate}
-%
-%\maketitle
-%
-% \begin{abstract}
-%   The \pkg{liquidtex} package integrates a Liquid-style templating layer
-%   into the \LaTeX{} compilation process.  It allows authors to incorporate
-%   templated, data-driven content into their documents by automatically
-%   rendering Liquid templates at compile time.
-% \end{abstract}
-%
-% \begin{documentation}
-%
-% \section{Package options}
-%
-% The package uses a key--value interface based on \pkg{l3keys2e}.  Options
-% may be passed at package load time or via \cs{liquidsetup} in the
-% preamble.  Some keys are restricted to preamble usage only.
-%
-% \subsection{General options}
-%
-% \begin{description}
-%
-%   \item[\texttt{verbose} (bool)]
-%     Enables verbose diagnostic messages.\newline
-%     Default: \texttt{false}.
-%
-%   \item[\texttt{no-cache} (bool)]
-%     Disables the use of cached rendered output.\newline
-%     Default: \texttt{false}.
-%
-%   \item[\texttt{outdir = \meta{path}}]
-%     Directory used to store rendered templates and cache files.
-%     Default: \texttt{.liquid-cache}.\newline
-%     This key may only be used in the preamble.
-%
-%   \item[\texttt{use-auxdir} (bool)]
-%     Indicates whether \texttt{outdir} should be interpreted relative to
-%     the engine’s auxiliary directory (e.g.\ under \texttt{--auxdir} or
-%     \texttt{--output-directory}).  This integration is not yet
-%     implemented; the option is reserved for future versions.\newline
-%     Default: \texttt{true}.  Preamble-only.
-%
-% \end{description}
-%
-% \subsection{Template data}
-%
-% \begin{description}
-%
-%   \item[\texttt{data = \meta{file}}]
-%     Sets the default data source used when rendering templates.
-%     The value may be overridden for individual calls of
-%     \cs{inputliquid}.  No default is imposed.
-%
-% \end{description}
-%
-% \subsection{Engine selection}
-%
-% Liquid templates can be rendered by different backends.  The engine is
-% selected with:
-%
-% \begin{description}
-%
-%   \item[\texttt{engine = lua \textbar{} external}]
-%     Chooses the rendering backend.  This option is restricted to the
-%     preamble.
-%
-%     \begin{description}
-%
-%       \item[lua]
-%         Uses a Lua-based renderer.  Requires compilation with Lua\LaTeX.
-%
-%       \item[external]
-%         Uses an external program to render the template.  This backend
-%         requires additional configuration through \texttt{engine-conf}.
-%         Shell escape is required to run the external renderer.
-%
-%     \end{description}
-%
-% \end{description}
-%
-% \subsection{External engine configuration}
-%
-% When \texttt{engine = external}, the external renderer must be configured
-% via:
-%
-% \begin{description}
-%
-%   \item[\texttt{engine-conf = \meta{key--value list}}]
-%     A subkey list describing the external renderer, for example:
-%
-% \begin{verbatim}
-%   engine-conf = {
-%     path           = /usr/bin/liquidtex-cli,
-%     arg-style      = positional,
-%     template-index = 1,
-%     data-index     = 2,
-%     output-index   = 3,
-%   }
-% \end{verbatim}
-%
-% Supported sub-keys:
-%
-%     \begin{description}
-%
-%       \item[\texttt{path = \meta{string}}]
-%         Absolute or relative path to the external executable.
-%         This is mandatory when using the external engine.
-%
-%       \item[\texttt{arg-style = positional \textbar{} named}]
-%         Determines how command-line arguments are passed to the external
-%         renderer.
-%
-%       \item[\texttt{positional \textbar{} named}]
-%         As a (maybe temporary) shortcut for the \texttt{arg-style} key options.
-%
-%       \item[\texttt{template-index}, \texttt{data-index}, \texttt{output-index}]
-%         When using positional argument style, these keys specify the
-%         1-based positions of the template, data, and output file arguments.
-%         Defaults: \texttt{1}, \texttt{2}, \texttt{3}.
-%
-%     \end{description}
-%
-% This option is restricted to the preamble.  If \texttt{engine = external}
-% and no \texttt{path} is provided, the package raises an error at
-% \cs{begin}\env{\{document\}}.
-%
-% \end{description}
-%
-%
-% \section{User interface}
-%
-% \subsection{Runtime configuration}
-%
-% \begin{function}{\liquidsetup}
-% \begin{syntax}
-%   \cs{liquidsetup}\marg{options}
-% \end{syntax}
-%
-% Applies configuration keys at runtime.  The effect is identical to using
-% package options, except that keys marked as “preamble-only” may only be
-% used before \cs{begin}\env{\{document\}}.  Example:
-%
-% \begin{verbatim}
-%   \liquidsetup{
-%     outdir     = .liquid-cache,
-%     use-auxdir = false,
-%     verbose    = true,
-%     data       = info.yml
-%   }
-% \end{verbatim}
-%
-% \end{function}
-%
-% \subsection{Cache directory management}
-%
-% The cache directory stores all rendered template output files.
-%
-% \begin{itemize}
-%   \item The directory is determined by \texttt{outdir}.
-%   \item It is created automatically at \cs{begin}\env{\{document\}}.
-%   \item This requires shell escape, as directory creation uses
-%         \cs{sys_shell_now:n}.  If shell escape is disabled, the package
-%         issues an error asking the user to create the directory manually.
-%   \item When \texttt{no-cache} is set, cache lookup is disabled and
-%         templates are always re-rendered.
-% \end{itemize}
-%
-% Throughout the compilation, the package may emit diagnostic messages
-% about cache usage when \texttt{verbose} is enabled.
-%
-% \subsection{Liquid template rendering}
-%
-% \begin{function}{\inputliquid}
-% \begin{syntax}
-%   \cs{inputliquid}\oarg{data file}\marg{template file}
-% \end{syntax}
-%
-% Renders a Liquid template and inputs the resulting \LaTeX{} code.
-%
-% \paragraph{Arguments}
-% \begin{itemize}
-%   \item \meta{template file}: mandatory path to a Liquid template.
-%   \item \meta{data file}: optional override of the global \texttt{data}
-%         setting.
-% \end{itemize}
-%
-% \paragraph{Caching}
-%
-% For each pair \marg{template}\marg{data}, the package generates a cache
-% file whose name is derived from the base names of the sources:
-%
-% \begin{quote}
-%   \verb|<outdir>/<template>+<data>.tex|
-% \end{quote}
-%
-% If no data file is used, the name simplifies to:
-%
-% \begin{quote}
-%   \verb|<outdir>/<template>.tex|
-% \end{quote}
-%
-% A cache entry is considered \emph{fresh} when:
-%
-% \begin{itemize}
-%   \item it exists, and
-%   \item it is not older than the template file, and
-%   \item if a data file is present, it is not older than that data file.
-% \end{itemize}
-%
-% Freshness is checked using the \pkg{filemod} package.
-% If the cache is fresh, the cached file is input directly; otherwise, the
-% rendering engine is invoked and the result stored.
-%
-% \paragraph{Rendering}
-%
-% Currently, \cs{inputliquid} is implemented only for the
-% \texttt{external} engine.  Rendering proceeds as follows:
-%
-% \begin{itemize}
-%   \item The external executable is invoked through the system shell.
-%   \item Shell escape must therefore be enabled.
-%   \item The template, data file, and output path are passed according to
-%         the configuration set by \texttt{engine-conf}.
-%   \item Upon success, the generated file is stored in the cache
-%         directory and immediately input.
-% \end{itemize}
-%
-% \paragraph{Example}
-%
-% \begin{verbatim}
-%   \usepackage[
-%     engine      = external,
-%     engine-conf = { path = liquidtex-cli },
-%     data        = cv.yml,
-%     outdir      = .liquid-cache
-%   ]{liquidtex}
-%
-%   % Uses cv.yml
-%   \inputliquid{templates/header.liq}
-%
-%   % Override data for this template
-%   \inputliquid[teaching.yml]{templates/teaching-entry.liq}
-% \end{verbatim}
-%
-% \end{function}
-%
-% \end{documentation}
-% \MaybeStop{
-% }
 % \begin{implementation}
 %
 % \subsection{Package declaration and internal variables}
@@ -644,13 +382,28 @@ Running "make install" installs the files in the local TeX tree.
 \bool_new:N \__lqt_no_cache_bool
 \tl_new:N   \__lqt_engine_tl
 \tl_new:N   \__lqt_outdir_tl
-\tl_new:N   \__lqt_data_path_tl
 
 \tl_new:N   \__lqt_engine_path_tl
 \tl_new:N   \__lqt_engine_arg_style_tl
 \int_new:N  \__lqt_engine_template_index_int
 \int_new:N  \__lqt_engine_data_index_int
 \int_new:N  \__lqt_engine_output_index_int
+
+\tl_new:N   \l__lqt_inline_template_tl
+\tl_new:N   \l__lqt_inline_data_tl
+\tl_new:N   \l__lqt_inline_tmp_tl
+\iow_new:N  \l__lqt_inline_iow
+
+\tl_new:N  \l__lqt_inline_data_name_tl
+\tl_new:N  \l__lqt_inline_data_file_tl
+\iow_new:N \l__lqt_inline_data_iow
+
+% data collections
+\prop_new:N \g__lqt_data_sources_prop
+
+% Custom counters
+\int_new:N  \c__lqt_inlines_cnt_int
+\int_new:N  \c__lqt_inline_data_cnt_int
 
 % internal derived value: effective cache directory
 \tl_new:N   \__lqt_cache_dir_tl
@@ -665,6 +418,13 @@ Running "make install" installs the files in the local TeX tree.
 \tl_new:N   \l__lqt_tmp_template_tl
 \tl_new:N   \l__lqt_tmp_data_tl
 \tl_new:N   \l__lqt_engine_log_file_tl
+\tl_new:N   \l__lqt_tmp_data_key_tl
+
+\tl_new:N   \l__lqt_tmp_filename_tl
+
+% IO
+\iow_new:N  \l__lqt_cache_iow
+
 
 %    \end{macrocode}
 %
@@ -673,49 +433,53 @@ Running "make install" installs the files in the local TeX tree.
 % We define a key family \texttt{liquidtex} with one boolean key.
 %
 %    \begin{macrocode}
-\keys_define:nn { liquidtex }
+\keys_define:nn { liquidtex } { %
+  verbose .bool_set:N = \__lqt_verbose_bool,
+  verbose .initial:n  = false,
+  verbose .default:n  = true,
+
+  outdir  .tl_set:N   = \__lqt_outdir_tl,
+  outdir  .initial:n  = {.liquid-cache},
+  outdir  .usage:n    = preamble,
+
+  use-auxdir .bool_set:N = \__lqt_use_auxdir_bool,
+  use-auxdir .initial:n  = true,
+  use-auxdir .default:n  = true,
+  use-auxdir .usage:n    = preamble,
+
+  no-cache .bool_set:N = \__lqt_no_cache_bool,
+  no-cache .initial:n  = false,
+  no-cache .default:n  = true,
+  no-cache .usage:n    = preamble,
+
+  engine .choice:,
+  engine / lua .code:n      =
+  { \tl_set:Nn \__lqt_engine_tl { lua } },
+  engine / external .code:n =
+  { \tl_set:Nn \__lqt_engine_tl { external } },
+  engine / unknown .code:n =
   {
-    verbose .bool_set:N = \__lqt_verbose_bool,
-    verbose .initial:n  = false,
-    verbose .default:n  = true,
+    \msg_fatal:nnx { liquidtex } { unknown-engine } {#1}
+  },
 
-    outdir  .tl_set:N   = \__lqt_outdir_tl,
-    outdir  .initial:n  = {.liquid-cache},
-    outdir  .usage:n    = preamble,
+  engine .initial:n = external,
+  engine .usage:n   = preamble,
 
-    use-auxdir .bool_set:N = \__lqt_use_auxdir_bool,
-    use-auxdir .initial:n  = true,
-    use-auxdir .default:n  = true,
-    use-auxdir .usage:n    = preamble,
+  engine-conf .code:n =
+  { \keys_set:nn { liquidtex / engine-conf } { #1 } },
+  engine-conf .usage:n = preamble,
 
-    no-cache .bool_set:N = \__lqt_no_cache_bool,
-    no-cache .initial:n  = false,
-    no-cache .default:n  = true,
-    no-cache .usage:n    = preamble,
+  data .code:n = { %
+    \prop_gput:Nnn \g__lqt_data_sources_prop { default } { #1 }
+  },
+  data .initial:n  = {},
 
-    engine .choice:,
-    engine / lua .code:n      =
-    { \tl_set:Nn \__lqt_engine_tl { lua } },
-    engine / external .code:n =
-    { \tl_set:Nn \__lqt_engine_tl { external } },
-    engine / unknown .code:n =
-    {
-      \msg_error:nnx { liquidtex } { unknown-engine } {#1}
-    },
+  data-sources .code:n = { %
+    \prop_gset_from_keyval:Nn \g__lqt_data_sources_prop { #1 }
+  },
+}
 
-    engine .initial:n = external,
-    engine .usage:n   = preamble,
-
-    engine-conf .code:n =
-    { \keys_set:nn { liquidtex / engine-conf } { #1 } },
-    engine-conf .usage:n = preamble,
-
-    data .tl_set:N   = \__lqt_data_path_tl,
-    data .initial:n  = {},
-  }
-
-\keys_define:nn { liquidtex / engine-conf }
-{
+\keys_define:nn { liquidtex / engine-conf } { %
   path .tl_set:N   = \__lqt_engine_path_tl,
   path .initial:n  = {},
 
@@ -749,10 +513,13 @@ Running "make install" installs the files in the local TeX tree.
 %    \begin{macrocode}
 %% useful for file modification information - notably cache here
 \RequirePackage{filemod}
+%% useful for inline input
+\RequirePackage{fancyvrb}
 %% internal message module
 \RequirePackage{lqt-messages}
 \RequirePackage{lqt-files}
 \RequirePackage{lqt-engine-external}
+\RequirePackage{lqt-data}
 %    \end{macrocode}
 % \subsection{Public configuration command}
 %
@@ -763,42 +530,151 @@ Running "make install" installs the files in the local TeX tree.
 % \subsection{Liquid rendering}
 %    \begin{macrocode}
 
+% -------------------------------------------------------------------------
+%                       INTERNAL INTERFACE HANDLING
+% -------------------------------------------------------------------------
 
-\cs_new_protected:Npn \__lqt_input_liquid:nn #1#2
-  {
-    % Check that the template file exists
-    \IfFileExists{ #1 }
-      {}
-      {
-        \msg_error:nnx
-          { liquidtex } { missing-template }
-          { #1 }
-      }
-
-    \tl_if_eq:VnTF \__lqt_engine_tl { external }
-      { \__lqt_render:nn { #1 }{ #2 } }
-      {
-        \msg_error:nnx
-          { liquidtex } { engine-not-external }
-          { \tl_use:N \__lqt_engine_tl }
-      }
+\cs_new_protected:Npn \__lqt_input_liquid:nn #1#2 { %
+  % Check that the template file exists
+  \IfFileExists{ #1 }{}{ %
+    \msg_error:nnx
+    { liquidtex } { missing-template }
+    { #1 }
   }
 
-\NewDocumentCommand \inputliquid { O{} m }
-  {
-    % #1 = optional data override, #2 = template
-    \tl_set:Nn \l__lqt_tmp_template_tl { #2 }
-    \tl_set:Nx \l__lqt_tmp_data_tl
-      {
-        \tl_if_blank:nTF { #1 }
-          { \__lqt_data_path_tl }
-          { #1 }
-      }
-    \__lqt_input_liquid:nn
-      { \tl_use:N \l__lqt_tmp_template_tl }
-      { \tl_use:N \l__lqt_tmp_data_tl }
+  \tl_if_eq:VnTF \__lqt_engine_tl { external } { %
+    \__lqt_render:nn { #1 }{ #2 } %
+  } { %
+    \msg_error:nnx { liquidtex } { engine-not-external }
+    { \tl_use:N \__lqt_engine_tl } %
   }
-  
+}
+
+% Internal handler for inline inputs
+% #1 is the optional data argument
+% #2 is the contents of the template
+\cs_new_protected:Npn \__lqt_inline_input:nn #1#2 { %
+  % Increment inline counter
+  \int_gincr:N \c__lqt_inlines_cnt_int
+
+  % Get template cache filename
+  \__lqt_compute_inline_template_filename:
+
+  \tl_set:Nn \l__lqt_inline_data_tl { #1 }
+
+  % Store template in cache file
+  \__lqt_write_to_cache_file:Vn \l__lqt_inline_template_tl { #2 }
+
+  % Resolve which data file to use:
+  \__lqt_resolve_data_source:nN { #1 } \l__lqt_tmp_data_tl
+}
+
+% Internal handler for inline data
+% #1 is the data source alias
+% #2 is the data
+\cs_new_protected:Npn \__lqt_inline_data:nn #1#2 { %
+  % Increment inline counter
+  \int_gincr:N \c__lqt_inline_data_cnt_int
+
+  % Get cache filename
+  \__lqt_compute_inline_data_filename:
+
+  % Store data in cache file
+  \__lqt_write_to_cache_file:Vn \l__lqt_inline_data_file_tl { #2 }
+
+  \prop_if_in:NeT \g__lqt_data_sources_prop { #1 } { %
+    \msg_warn:nnn { liquidtex } { redefining-data } { #1 } %
+  }
+
+  \prop_gput:Nnx \g__lqt_data_sources_prop
+  { #1 }
+  { \tl_use:N \l__lqt_inline_data_file_tl }
+}
+
+\cs_new_protected:Npn \__lqt_inline_data_begin:n #1 { %
+  % Increment inline counter
+  \int_gincr:N \c__lqt_inline_data_cnt_int
+
+  % Set data key name
+  \tl_set:Nn \l__lqt_tmp_data_key_tl { #1 }
+
+  \prop_if_in:NeT \g__lqt_data_sources_prop { %
+    \tl_use:N \l__lqt_tmp_data_key_tl %
+  } { %
+    \msg_warning:nnx { liquidtex } { redefining-data } %
+    { \tl_use:N \l__lqt_tmp_data_key_tl } %
+  }
+
+  % Get cache filename
+  \__lqt_compute_inline_data_filename:
+
+  \__lqt_get_file_base_name:nx \l__lqt_tmp_filename_tl { %
+    \tl_use:N \l__lqt_inline_data_file_tl %
+  } %
+  \tl_put_right:Nn \l__lqt_tmp_filename_tl { .tmp }
+
+  % Now switch out of expl3 and open VerbatimOut on that file
+  \ExplSyntaxOff %
+  \VerbatimEnvironment
+  \begin{VerbatimOut}{\l__lqt_tmp_filename_tl} %
+}
+
+\cs_new_protected:Npn \__lqt_inline_data_end: { %
+  \end{VerbatimOut}
+  \ExplSyntaxOn
+
+  \__lqt_mv:xx { %
+    \tl_use:N \l__lqt_tmp_filename_tl%
+  } { %
+    \tl_use:N \l__lqt_inline_data_file_tl
+  } %
+
+  \prop_gput:Nxx \g__lqt_data_sources_prop
+  { \tl_use:N \l__lqt_tmp_data_key_tl }
+  { \tl_use:N \l__lqt_inline_data_file_tl }
+}
+
+% -------------------------------------------------------------------------
+%                            USER INTERFACE
+% -------------------------------------------------------------------------
+
+\NewDocumentCommand{\liquiddatasource}{ m m }{%
+  \prop_gput:Nnn \g__lqt_data_sources_prop { #1 } { #2 } %
+}
+
+
+\NewDocumentCommand{\inputliquid}{ O{} m }{%
+  \tl_set:Nn \l__lqt_tmp_template_tl { #2 }
+
+  \__lqt_resolve_data_source:nN { #1 } \l__lqt_tmp_data_tl
+
+  \__lqt_input_liquid:nn
+  { \tl_use:N \l__lqt_tmp_template_tl }
+  { \tl_use:N \l__lqt_tmp_data_tl }
+}
+
+\NewDocumentEnvironment{liquid}{ O{} +b }{%
+  \__lqt_inline_input:nn { #1 } { #2 } %
+
+  \__lqt_input_liquid:nn %
+  { \tl_use:N \l__lqt_inline_template_tl } %
+  { \tl_use:N \l__lqt_tmp_data_tl } %
+}{} %
+
+\NewDocumentCommand{\liquidinline}{ O{} m }{%
+  \__lqt_inline_input:nn { #1 } { #2 } %
+
+  \__lqt_input_liquid:nn %
+  { \tl_use:N \l__lqt_inline_template_tl } %
+  { \tl_use:N \l__lqt_tmp_data_tl } %
+}
+
+\NewDocumentEnvironment{liquiddata}{ m }{%
+  \__lqt_inline_data_begin:n {#1} %
+}{ %
+  \__lqt_inline_data_end:
+}
+
 %    \end{macrocode}
 %    \begin{macrocode}
 \AtBeginDocument{ %

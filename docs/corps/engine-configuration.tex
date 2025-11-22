@@ -1,0 +1,92 @@
+\section{Engine configuration}
+\label{sec:engine-configuration}
+
+The configuration of the engine is done in the same way as the general
+configuration of the package: either by passing options when loading
+\pkg{liquidtex}, or by using \refCom{liquidsetup}. %
+
+The main entry point for engine configuration is the option key
+\refKey{engine-conf}. %
+
+\begin{docKey}[][doc description=\preambleonly*\ \mandatory]{engine-conf}{=\meta{options}}{}
+  This is a \emph{subkey} list describing the rendering engine. %
+\end{docKey}
+
+\subsection{External engine}
+\label{ssec:external-engine-config}
+
+The use of an external engine to render the templates requires a specific
+configuration. %
+
+\begin{blocktip}
+  The use of an external engine also requires the \verb+-shell-escape+ flag to
+  be set for the compilation. %
+\end{blocktip}
+
+The available options for an external engine are the following: %
+
+\begin{docKey}[][doc description=\mandatory]{path}{=\meta{path}}{}%
+  \index{external engine!path}
+  Absolute or relative path to the external executable. %
+  If this option is not set, an error will be thrown at compile time. %
+\end{docKey}
+
+\begin{docKey}{arg-style}{=\docValue{positional}\textbar\docValue{named}}{default: \docValue{positional}}%
+  \index{external engine!argument style}
+  Determines how command-line arguments are passed to the external
+  renderer. %
+\end{docKey}
+
+\begin{docKey}{named}{}{alias for \refKey{arg-style}}%
+\end{docKey}
+\vspace*{-0.5cm}
+\begin{docKey}{positional}{}{alias for \refKey{arg-style}}%
+  \index{external engine!argument style}
+  As a (temporary) shortcut for the \refKey{arg-style} key options. %
+\end{docKey}
+
+\subsubsection*{When using \docValue{positional}}
+
+\begin{docKey}{template-index}{=\docValue{integer}}{default: \docValue{1}}%
+  \index{external engine!template index} %
+  Specifies the position of the template argument (1-based). %
+\end{docKey}
+
+\begin{docKey}{data-index}{=\docValue{integer}}{default: \docValue{2}}%
+  \index{external engine!data index} %
+  Specifies the position of the data argument (1-based). %
+\end{docKey}
+
+\begin{docKey}{output-index}{=\docValue{integer}}{default: \docValue{3}}%
+  \index{external engine!output index} %
+  Specifies the position of the output file argument (1-based). %
+\end{docKey}
+
+\clearpage
+
+\begin{dbexample}{Configuring an external engine}{}
+  Suppose your external engine can be called as: %
+
+  \begin{terminalblock}
+    $ /usr/bin/liquid-cli [template] [data] [output]
+  \end{terminalblock}
+  
+  then you would use the following code in the preamble: %
+\begin{preamblecode}
+  \liquidsetup{
+    engine-conf = {
+      path           = /usr/bin/liquidtex-cli,
+      arg-style      = positional,
+      template-index = 1,
+      data-index     = 2,
+      output-index   = 3,
+    }
+  }
+\end{preamblecode}
+\end{dbexample}
+
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../liquidtex"
+%%% End:

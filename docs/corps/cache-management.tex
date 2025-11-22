@@ -1,0 +1,46 @@
+\section{Caching}
+\label{sec:caching}
+
+A core feature of \pkg{liquidtex} is that it can leverage a \emph{cache} to
+speed up compilation by avoiding the re-rendering of templates. %
+
+\subsection{Cache directory management}
+
+The cache directory stores all rendered output files. %
+This directory if computed from \refKey{outdir}. %
+
+\begin{blockwarning}
+  The use of cache with \pkg{liquidtex} imposes the use of the
+  \verb+-shell-escape+ compilation flag. %
+\end{blockwarning}
+
+\begin{blocktip}
+  Throughout the compilation, the package may emit diagnostic messages
+  about cache usage when \refKey{verbose} is enabled. %
+\end{blocktip}
+
+\subsection{Cache for rendering}
+
+When compiling the document and rendering templates, \pkg{liquidtex} will
+create, for each pair (\meta{template}, \meta{data}), a cache file whose
+name is derived from the base names of the sources. %
+This mecanism allows for the same template to be cached rendered with
+different data sets and still avoid being rerendered. %
+
+A cache entry is considered \emph{fresh} when:
+
+\begin{enumerate}
+  \item it exists;
+  \item it is not older than the template file; and
+  \item if a data file is present, it is not older than that data file.
+\end{enumerate}
+
+Freshness is checked using the \pkg{filemod} package. %
+If the cache is fresh, the cached file is input directly; otherwise, the
+rendering engine is invoked and the result stored. %
+
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../liquidtex"
+%%% End:

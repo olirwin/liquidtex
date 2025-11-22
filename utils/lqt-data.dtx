@@ -1,0 +1,74 @@
+%<*preamble>
+%%------------:| ------------------------------------------------------------
+%%    lqt-data:| Sub module for `liquidtex` - data handling
+%%      Author:| Oliver Irwin
+%%      E-mail:| oliver@irwin.sh
+%%     License:| Released under the LaTeX Project Public License v1.3c or later
+%%         See:| http://www.latex-project.org/lppl.txt
+%%
+%</preamble>
+%<*postamble>
+%%
+%% Copyright (C) 2025 by Oliver Irwin <oliver@irwin.sh>
+%%
+%% This work may be distributed and/or modified under the conditions of the
+%% LaTeX Project Public License (LPPL), either version 1.3c of this license or
+%% (at your option) any later version. The latest version of this license is
+%% in the file:
+%%
+%% http://www.latex-project.org/lppl.txt
+%%
+%% This work is "maintained" (as per LPPL maintenance status) by Oliver Irwin.
+%%
+%</postamble>
+%<*package>
+\def\lqtdataversion{0.2.0}
+\def\lqtdatadate{2025-11-21}
+\NeedsTeXFormat{LaTeX2e}[2020-01-01]
+\ProvidesExplPackage
+  {lqt-data}
+  {\lqtdatadate}
+  {\lqtdataversion}
+  {Data handling for the `liquidtex` package}
+
+\RequirePackage{expl3}
+\RequirePackage{lqt-messages}
+\ExplSyntaxOn
+
+% #1 = user-specified data ref (namespace or literal path, may be blank)
+% #2 = storage for resolved filename
+\cs_new_protected:Npn \__lqt_resolve_data_source:nN #1#2 { %
+  \bool_if:NT \__lqt_verbose_bool { %
+    \msg_info:nnxx { liquidtex } { resolve-data-source } %
+    { #1 }{} %
+  }
+
+  \tl_if_blank:nTF { #1 } {
+    % Blank => use 'default'
+    \prop_get:NnNTF \g__lqt_data_sources_prop { default } #2 {} { %
+      % no 'default' registered: error
+      \msg_fatal:nn { liquidtex } { default-data-missing }
+    }
+  } { %
+    % Non-blank => try as named data source
+    \prop_get:NnNTF \g__lqt_data_sources_prop { #1 } #2 {} { %
+      % not found: treat #1 as literal filename
+      \tl_set:Nn #2 { #1 } %
+    } %
+  } %
+
+  \bool_if:NT \__lqt_verbose_bool { %
+    \msg_info:nnxx { liquidtex } { resolve-data-source } %
+    { #1 }{ #2 } %
+  }
+
+}
+
+\ExplSyntaxOff
+%</package>
+%\Finale
+\endinput
+% Local Variables:
+% mode: docTeX
+% TeX-master: "../liquidtex"
+% End:

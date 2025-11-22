@@ -1,0 +1,53 @@
+\section{YAML}
+\label{app:yaml}
+
+\YAML{} is a human-friendly, structured data format designed to represent
+\emph{configuration}, \emph{content}, and \emph{hierarchical data} in a
+clear and readable way. %
+Unlike \JSON{}, \YAML{} emphasises simplicity: its the indentation that
+conveys the structure, and the syntax avoids unnecessary punctuation. %
+Because of its readability and flexibility, \YAML{} is commonly used as a
+data source for templating systems, configuration files, and structured
+documents. %
+
+\medskip
+
+A \YAML{} file is composed of key--value pairs, lists, and nested
+objects. %
+Indentation determines the hierarchy, and the syntax supports a wide range
+of scalar types (strings, numbers, booleans), collections, and optional
+type annotations. %
+Some common constructs include: %
+
+\begin{itemize}
+  \item \textbf{Mappings} (objects, or maps, or dictionnaries), e.g.:
+        \yml{title: "My Document"} ;
+  \item \textbf{Sequences} (lists), introduced with a dash, e.g.:
+    \begin{ymlblock}
+      - first item
+      - second item
+      - third item
+    \end{ymlblock}
+  \item \textbf{Nested structures}, created by indentation, e.g.:
+    \begin{ymlblock}
+      author:
+          name: Alice
+          id: 42
+    \end{ymlblock}
+\end{itemize}
+
+\medskip
+
+Of course, these structures can be combined and nested. %
+
+\YAML’s design makes it particularly suitable as an external data source
+for templating engines such as \seesection{app:liquid-templates}{Liquid}. %
+Each \YAML{} key becomes accessible as a variable in the template, and the
+structure of the \YAML{} document (lists, maps, nested objects) is
+preserved during rendering. %
+
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../liquidtex"
+%%% End:

@@ -380,3 +380,4 @@ create-*.sh
 templates
 
 releases
+*.atfi

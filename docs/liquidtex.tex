@@ -1,0 +1,57 @@
+\documentclass[11pt,a4paper,british,twoside]{article}
+
+\pdfvariable minorversion=7
+
+\input{utils/doc-macros}
+
+\def\liquidtexversion{0.2.0}
+\def\liquidtexdate{2025-11-21}
+
+\makeindex[title=Index des concepts,extout=pdx,extin=pnd,columnseprule]
+
+\begin{document}
+\frontmatter
+\input{utils/doc-title}
+\input{corps/aknowledgments}
+\clearpage
+\stoptoc
+\tableofcontents
+\resumetoc
+\mainmatter
+\input{corps/user-interface}
+\clearpage
+\input{corps/package-options}
+\clearpage
+\input{corps/engine-configuration}
+\clearpage
+\input{corps/cache-management}
+\cleardoublepage
+\backmatter
+\appendix
+\crefalias{section}{appendix}
+\input{appendix/documentation-help}
+\clearpage
+\input{appendix/examples}
+\clearpage
+\input{appendix/liquid}
+\clearpage
+\input{appendix/yaml}
+% \PrintChanges
+% \renewcommand{\indexname}{Index des commandes}
+% \printindex[\jobname-commands]
+% \UndoMarkbothHack
+% %
+% \cleardoublepage
+% \phantomsection
+% \MarkbothHack
+% \pagestyle{indexpagestyle}
+% \renewcommand{\indexname}{Index des concepts}
+% \printindex
+% \UndoMarkbothHack
+\end{document}
+
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: t
+%%% End:
