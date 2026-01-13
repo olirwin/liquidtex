@@ -381,3 +381,5 @@ templates
 
 releases
 *.atfi
+scripts/
+tmp/

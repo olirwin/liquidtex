@@ -675,6 +675,52 @@ Running "make install" installs the files in the local TeX tree.
   \__lqt_inline_data_end:
 }
 
+\RequirePackage{luapackageloader}
+
+\tl_new:N \l__my_pkg_path_tl
+\tl_set:Nx \l__my_pkg_path_tl {%
+  \file_get_full_name:n { liquidtex.sty } }
+\tl_new:N \l__tmp_tmp_tl
+\tl_new:N \l__dir_tl
+
+\file_parse_full_name:VNNN \l__my_pkg_path_tl \l__dir_tl \l__tmp_tmp_tl \l__tmp_tmp_tl
+
+\typeout{\l__my_pkg_path_tl}
+\typeout{\l__tmp_tmp_tl}
+\typeout{\l__dir_tl}
+
+\tl_new:N \g_liquidtex_dir_tl
+
+\directlua{
+  -- Ask kpathsea where liquidtex.sty really is
+  local f = kpse.find_file("liquidtex.sty", "tex")
+  if f then
+    -- Extract directory part
+    local dir = f:match("^(.*)[/\\].-$") or ""
+    -- Escape a few TeX specials just in case
+    local function tex_escape(s)
+      return (s:gsub("([%%#{}])", "\\%1"))
+    end
+    tex.sprint(
+      "\\tl_gset:Nn \\g_liquidtex_dir_tl {" .. tex_escape(dir) .. "/}"
+    )
+  else
+    tex.sprint(
+      "\\tl_gset:Nn \\g_liquidtex_dir_tl {}"
+    )
+  end
+}
+
+\NewDocumentCommand{\lpath}{}{\tl_use:N \l__dir_tl}
+
+\NewDocumentCommand{\ltest}{}{%
+  \directlua{%
+    h = require("scripts/hello");
+
+    h.hello();
+  }%
+}
+
 %    \end{macrocode}
 %    \begin{macrocode}
 \AtBeginDocument{ %

@@ -2,7 +2,7 @@ NAME  = liquidtex
 SHELL = zsh
 PWD   = $(shell pwd)
 VERS  = $(shell grep -E "\\\\version{[0-9.]*.*}" liquidtex.dtx | sed -E "s|\\\\version\\{([0-9.a-z]*).*\\}|\1|")
-LOCAL := $(shell kpsewhich --var-value TEXMFLOCAL | awk -F: '{print $$1}')
+LOCAL := $(shell kpsewhich --var-value TEXMFLOCAL | awk -F: '{print $$2}')
 UTREE = $(shell kpsewhich --var-value TEXMFHOME)
 TEXCC = lualatex
 
