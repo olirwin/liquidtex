@@ -2,6 +2,7 @@
 
 Updated **2026-11-05** on `fix/reproducible-rendering`, branched from local `dev`
 commit `49a6ce4c1715370440e96de4b0188bb7baa0daed`. This supersedes the initial audit.
+Implementation: [PR #28](https://github.com/olirwin/liquidtex/pull/28), targeting `dev`.
 Changes on this branch are implemented and locally verified, pending review/merge.
 GitHub issues should retain that distinction until the fixes reach the relevant
 integration/default branch.
@@ -73,8 +74,9 @@ also generated from blocks in `liquidtex.dtx`. Extract with `make extract`.
 
 ## GitHub issue mapping
 
-The GitHub states below describe the starting point. The branch implements these
-items; open issues are moved to review status with implementation/test evidence,
+The starting states are recorded below. All fourteen originally open issues
+(#11–#24) have implementation notes and `status:in-review`; closed issues #2–#6
+and #10 have additional correction notes. These updates link to PR #28,
 not silently treated as changes already merged into `dev` or `main`.
 
 | Issue | Starting state | Implementation / evidence |
@@ -111,6 +113,8 @@ not silently treated as changes already merged into `dev` or `main`.
 Environment: TeX Live 2026 / LuaHBTeX 1.24.0, LaTeX2e 2025-11-01,
 LaTeX3 2026-01-19, Python 3. Tests generate their own files under `/tmp`.
 
+- Clean export of committed branch `a0162cb`: extraction and all 15 tests pass
+  without ignored workspace files.
 - `make extract`: succeeds and generates all main/helper runtime packages.
 - `python3 tests/run.py`: **15 behavioral integration tests pass**. These include
   native/external/pdfLaTeX output, warm caches, same-timestamp content changes,
@@ -124,8 +128,9 @@ LaTeX3 2026-01-19, Python 3. Tests generate their own files under `/tmp`.
 - ZIP content assertions cover main/helper packages, engine/parser, manual source
   and PDF, plus runnable example inputs.
 - GitHub Actions configuration runs extraction/tests on Ubuntu; hosted execution
-  is checked after publishing the branch. A CI result must not be inferred from
-  the local suite alone.
+  found a TeX Live 2023 output-directory compatibility gap; a command-line
+  fallback has been added and the hosted suite is being rerun. Local results
+  must not be substituted for the hosted result.
 
 ## Remaining work and limits
 

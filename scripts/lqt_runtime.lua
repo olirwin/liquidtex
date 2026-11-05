@@ -208,6 +208,16 @@ end
 function M.run_file(request_path)
   if not lfs.attributes(request_path) then
     local output_dir = (status and status.output_directory) or os.getenv("TEXMF_OUTPUT_DIRECTORY")
+    -- LuaTeX before TeX Live 2024 does not expose either of those values.
+    if not output_dir or output_dir == "" then
+      for index, value in ipairs(arg or {}) do
+        local option = value:match("^%-%-?output%-directory=(.*)$")
+        if option then output_dir = option end
+        if value == "-output-directory" or value == "--output-directory" then
+          output_dir = arg[index + 1]
+        end
+      end
+    end
     if output_dir and output_dir ~= "" then request_path = join(output_dir, request_path) end
   end
   local result_path = request_path:gsub("%.json$", ".result.tex")
