@@ -8,7 +8,7 @@ configuration of the package: either by passing options when loading
 The main entry point for engine configuration is the option key
 \refKey{engine-conf}. %
 
-\begin{docKey}[][doc description=\preambleonly*\ \mandatory]{engine-conf}{=\meta{options}}{}
+\begin{docKey}[][doc description=\preambleonly*]{engine-conf}{=\meta{options}}{}
   This is a \emph{subkey} list describing the rendering engine. %
 \end{docKey}
 
@@ -25,10 +25,10 @@ configuration. %
 
 The available options for an external engine are the following: %
 
-\begin{docKey}[][doc description=\mandatory]{path}{=\meta{path}}{}%
+\begin{docKey}{path}{=\meta{path}}{}%
   \index{external engine!path}
   Absolute or relative path to the external executable. %
-  If this option is not set, an error will be thrown at compile time. %
+  If this option is not set, the bundled external renderer is used. %
 \end{docKey}
 
 \begin{docKey}{arg-style}{=\docValue{positional}\textbar\docValue{named}}{default: \docValue{positional}}%

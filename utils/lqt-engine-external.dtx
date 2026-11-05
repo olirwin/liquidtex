@@ -22,178 +22,60 @@
 %%
 %</postamble>
 %<*package>
-\def\lqtengextversion{0.2.0}
-\def\lqtengextdate{2025-11-21}
-\NeedsTeXFormat{LaTeX2e}[2020-01-01]
-\ProvidesExplPackage
-  {lqt-engine-external}
-  {\lqtengextdate}
-  {\lqtengextversion}
-  {External engine handling for the `liquidtex` package}
-
-\RequirePackage{expl3}
-\RequirePackage{lqt-messages}
-\RequirePackage{lqt-files}
+\ProvidesExplPackage{lqt-engine-external}{2026-11-05}{0.3.0}{Liquid engine bridge}
 \ExplSyntaxOn
-
-%% Variable definitions
-
-
-%  Check configuration existence when using external engine.
-\cs_new_protected:Nn \__lqt_check_engine_config:
-{
-  % Only relevant if engine = external
-  \tl_if_eq:VnT \__lqt_engine_tl { external }
+\cs_new_protected:Npn \__lqt_locate_runtime:
   {
-    % Require a non-empty path
-    \tl_if_blank:VTF \__lqt_engine_path_tl
-    {
-      \msg_fatal:nn { liquidtex } { external-engine-config-missing }
-    }
-    { % later we will add more checks here (indices, arg-style, etc.)
-    }
+    \tl_set:Nx \l__lqt_runtime_tl {\file_full_name:n {scripts/lqt_runtime.lua}}
+    \tl_if_empty:NT \l__lqt_runtime_tl
+      {\tl_set:Nx \l__lqt_runtime_tl {\file_full_name:n {lqt_runtime.lua}}}
+    \tl_set:Nx \l__lqt_bridge_tl {\file_full_name:n {scripts/lqt_bridge.lua}}
+    \tl_if_empty:NT \l__lqt_bridge_tl
+      {\tl_set:Nx \l__lqt_bridge_tl {\file_full_name:n {lqt_bridge.lua}}}
+    \tl_if_empty:NT \l__lqt_runtime_tl
+      {\msg_fatal:nnn {liquidtex}{runtime-failed}{Missing~lqt_runtime.lua.~Reinstall~the~complete~package.}}
   }
-}
-
-%% ------------------------------------------------------------------------
-%%                           HELPER FUNCTIONS
-%% ------------------------------------------------------------------------
-
-% Build the external engine command line into \l__lqt_cmd_line_tl.
-% #1 = template path, #2 = data path (may be empty)
-\cs_new_protected:Npn \__lqt_build_cmdline:nn #1#2
+\cs_new_protected:Npn \__lqt_shell_quote:n #1
   {
-    \tl_clear:N \l__lqt_cmd_line_tl
-
-    % Always start with the engine path, quoted
-    \tl_put_right:Nx \l__lqt_cmd_line_tl
-      { \tl_use:N \__lqt_engine_path_tl }
-
-    % For now, implement two simple styles:
-    % - positional:  <engine> "<tmpl>" "<data>" "<out>"
-    % - named:      <engine> --template=... --data=... --output=...
-    \tl_if_eq:VnTF \__lqt_engine_arg_style_tl { positional }
+    \tl_set:Nx \l__lqt_quote_tl {\tl_to_str:e {#1}}
+    \sys_if_platform_windows:TF
       {
-        % Positional style
-        \tl_put_right:Nn \l__lqt_cmd_line_tl { \space #1 }
-
-        \tl_if_blank:nF { #2 }
-          {
-            \tl_put_right:Nn \l__lqt_cmd_line_tl { \space #2 }
-          }
-
-        \tl_put_right:Nx \l__lqt_cmd_line_tl
-          { \space \tl_use:N \l__lqt_output_file_tl }
+        \exp_args:NnV \regex_match:nnT {[\x{22}\x{25}!&|<>\x{5e}]} \l__lqt_quote_tl
+          {\msg_fatal:nnn {liquidtex}{runtime-failed}{Unsupported~Windows~shell~metacharacter.}}
+        \tl_set:Nx \l__lqt_quote_tl {"\exp_not:V \l__lqt_quote_tl"}
       }
       {
-        % Named style (very simple convention for now)
-        \tl_put_right:Nn \l__lqt_cmd_line_tl { \space --template=#1 }
-
-        \tl_if_blank:nF { #2 }
-          {
-            \tl_put_right:Nn \l__lqt_cmd_line_tl { \space --data=#2 }
-          }
-
-        \tl_put_right:Nx \l__lqt_cmd_line_tl
-          { \space --output=\tl_use:N \l__lqt_output_file_tl }
+        \tl_replace_all:Nnn \l__lqt_quote_tl {'}{'"'"'}
+        \tl_set:Nx \l__lqt_quote_tl {'\exp_not:V \l__lqt_quote_tl'}
       }
   }
-
-%% ------------------------------------------------------------------------
-%%                               RENDERING
-%% ------------------------------------------------------------------------
-
-% Aux function for rendering
-\cs_new_protected:Npn \__lqt_external_render_do:nn #1#2
+\cs_new_protected:Npn \__lqt_invoke:
   {
-    % #1 = template path, #2 = data path (may be empty)
-
-    % Log start of rendering
-    \bool_if:NT \__lqt_verbose_bool
+    \bool_set_false:N \__lqt_success_bool
+    \str_if_eq:VnTF \__lqt_engine_tl {lua}
       {
-        \msg_info:nnxxx { liquidtex } { render-start }
-          {#1}{#2}{\tl_use:N \l__lqt_output_file_tl}
+        \__lqt_native_init:
+        \directlua{liquidtex_runtime.run_file("\luaescapestring{\l__lqt_request_tl}")}
       }
-
-    \__lqt_build_cmdline:nn {#1} {#2}
-
-    % Log the actual command line
-    \bool_if:NT \__lqt_verbose_bool
       {
-        \msg_info:nnx { liquidtex } { render-cmd }
-          { \tl_use:N \l__lqt_cmd_line_tl }
-      }
-
-    % Run external engine, redirecting stderr to the log file
-    \sys_shell_now:x
-      {
-        \tl_use:N \l__lqt_cmd_line_tl \space
-        2> \tl_use:N \l__lqt_engine_log_file_tl
-      }
-
-    % Input the produced file or report a detailed error
-    \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
-    {
-      \bool_if:NT \__lqt_verbose_bool
-      {
-        \msg_info:nnx { liquidtex } { render-end }
-        {\tl_use:N \l__lqt_output_file_tl}
-      }
-    }
-    {
-      \msg_error:nnxxx
-      { liquidtex } { external-failed }
-      { \tl_use:N \l__lqt_output_file_tl }
-      { \tl_use:N \l__lqt_cmd_line_tl }
-      { \tl_use:N \l__lqt_engine_log_file_tl }
-    }
-  }
-
-%% Interface function for `liquidtex`
-\cs_new_protected:Npn \__lqt_render:nn #1#2
-  {
-    % #1 = template path, #2 = data path (may be empty)
-    \sys_if_shell_unrestricted:TF
-      {
-        % Decide whether to use cache or render
-        \__lqt_cache_is_fresh:nnTF { #1 }{ #2 }
+        \sys_if_shell_unrestricted:TF
           {
-            % Cache is fresh: file name already computed.
-            \bool_if:NT \__lqt_verbose_bool
-              {
-                \msg_info:nnxxx { liquidtex } { render-cache }
-                  {
-                    \tl_use:N \l__lqt_output_file_tl
-                  }{ #1 }{ #2 }
-              }
-            \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
-              { }
-              {
-                % Should not happen: cache vanished between check and input;
-                % fall back to re-render.
-                \__lqt_compute_output_files:nn { #1 }{ #2 }
-                \__lqt_external_render_do:nn { #1 }{ #2 }
-              }
+            \__lqt_locate_runtime:
+            \__lqt_shell_quote:n {\l__lqt_bridge_tl}
+            \exp_args:Ne \sys_get_shell:nnN {kpsewhich~--format=tex~\l__lqt_quote_tl}{} \l__lqt_bridge_tl
+            \tl_trim_spaces:N \l__lqt_bridge_tl
+            \__lqt_shell_quote:n {\l__lqt_bridge_tl}
+            \tl_set:Nx \l__lqt_command_tl {texlua~\exp_not:V \l__lqt_quote_tl}
+            \__lqt_shell_quote:n {\l__lqt_request_tl}
+            \tl_put_right:Nx \l__lqt_command_tl {~\exp_not:V \l__lqt_quote_tl}
+            \__lqt_log:nn {trace}{\l__lqt_command_tl}
+            \sys_shell_now:x {\l__lqt_command_tl}
           }
-          {
-            % Cache not fresh or missing: recompute and render.
-            \__lqt_compute_output_files:nn { #1 }{ #2 }
-            % Remove from cache stale file to avoid problems with versions
-            % This is to be able to fetch engine errors at rendering time
-            % If not done, it silently fails only
-            \__lqt_remove_file:x {\tl_use:N \l__lqt_output_file_tl}
-            \__lqt_external_render_do:nn { #1 }{ #2 }
-          }
-        }
-        {
-          \msg_error:nnx
-          { liquidtex } { shell-escape-required }
-        }
+          {\msg_fatal:nn {liquidtex}{shell-escape-required}}
+      }
+    \file_input:V \l__lqt_result_tl
+    \str_if_eq:VnT \__lqt_log_level_tl {trace}{\__lqt_log_file:n {\l__lqt_log_tl}}
   }
-
-\AtBeginDocument{ %
-  \__lqt_check_engine_config:
-}
 \ExplSyntaxOff
 %</package>
 %\Finale

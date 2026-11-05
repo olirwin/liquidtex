@@ -1,0 +1,7 @@
+{
+  "outdir": "../liquidtex-cache",
+  "outputs": [
+    {"template": "../templates/cv.liquid", "data": "cv.json", "output": "../build/full-cv.tex"},
+    {"template": "../templates/cv.liquid", "data": "short-cv.json", "output": "../build/short-cv.tex"}
+  ]
+}

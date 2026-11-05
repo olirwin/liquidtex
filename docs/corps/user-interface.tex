@@ -27,9 +27,9 @@ later. %
 \begin{dbexample}{Setting configuration values in preamble}{ui-configuration}
   \begin{preamblecode}
     \liquidsetup{
-      outdir = .liquid-cache,
+      outdir = liquidtex-cache,
       verbose = true,
-      data = info.yml
+      data = info.yml,
       data-sources = {
         cv = data/resume.yml,
         questions = data/notes-on-lecture.yml
@@ -122,10 +122,10 @@ detailed examples can be found in \cref{app:examples}. %
 \begin{preamblecode}
   \usepackage[
     engine       = external,
-    engine-conf  = { path = liquidtex-cli },
+    engine-conf  = { path = /path/to/renderer },
     data         = cv.yml,
     data-sources = { random = data/facts.yml },
-    outdir       = .liquid-cache
+    outdir       = liquidtex-cache
     ]{liquidtex}
 \end{preamblecode}
 \begin{bodycode}
@@ -144,7 +144,7 @@ A user can also use \emph{inline templating}. %
 To this end, two commands are available: %
 
 \begin{docCommand}[doc
-  new=2025-11-21]{liquidinline}{\oarg{alias{~\rm\textbar~}data path}}{}
+  new=2025-11-21]{liquidinline}{\oarg{alias{~\rm\textbar~}data path}\marg{template}}{}
   \index{inline!template!render}
 
   The optional argument \meta{alias{~\rm\textbar~}data path} is used to

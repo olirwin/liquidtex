@@ -22,48 +22,28 @@
 %%
 %</postamble>
 %<*package>
-\def\lqtdataversion{0.2.0}
-\def\lqtdatadate{2025-11-21}
-\NeedsTeXFormat{LaTeX2e}[2020-01-01]
-\ProvidesExplPackage
-  {lqt-data}
-  {\lqtdatadate}
-  {\lqtdataversion}
-  {Data handling for the `liquidtex` package}
-
-\RequirePackage{expl3}
-\RequirePackage{lqt-messages}
+\ProvidesExplPackage{lqt-data}{2026-11-05}{0.3.0}{Liquid data resolution}
 \ExplSyntaxOn
-
-% #1 = user-specified data ref (namespace or literal path, may be blank)
-% #2 = storage for resolved filename
-\cs_new_protected:Npn \__lqt_resolve_data_source:nN #1#2 { %
-  \bool_if:NT \__lqt_verbose_bool { %
-    \msg_info:nnxx { liquidtex } { resolve-data-source } %
-    { #1 }{} %
+\cs_new_protected:Npn \__lqt_alias_missing:n #1
+  {\msg_error:nnn {liquidtex}{unknown-option}{data-sources/#1}}
+\cs_new_protected:Npn \__lqt_alias_set:nn #1#2
+  {\prop_gput:Nnn \g__lqt_data_sources_prop {#1}{#2}}
+\cs_new_protected:Npn \__lqt_resolve_data:n #1
+  {
+    \tl_set:Nx \l_tmpa_tl {#1}
+    \tl_if_blank:VTF \l_tmpa_tl
+      {\prop_get:NnN \g__lqt_data_sources_prop {default} \l__lqt_data_tl}
+      {
+        \prop_get:NVNTF \g__lqt_data_sources_prop \l_tmpa_tl \l__lqt_data_tl
+          {}{\tl_set_eq:NN \l__lqt_data_tl \l_tmpa_tl}
+      }
+    \tl_if_blank:VF \l__lqt_data_tl
+      {
+        \file_if_exist:VTF \l__lqt_data_tl
+          {\tl_set:Nx \l__lqt_data_tl {\file_full_name:V \l__lqt_data_tl}}
+          {\msg_fatal:nnx {liquidtex}{runtime-failed}{Missing~data~file~\l__lqt_data_tl}}
+      }
   }
-
-  \tl_if_blank:nTF { #1 } {
-    % Blank => use 'default'
-    \prop_get:NnNTF \g__lqt_data_sources_prop { default } #2 {} { %
-      % no 'default' registered: error
-      \msg_fatal:nn { liquidtex } { default-data-missing }
-    }
-  } { %
-    % Non-blank => try as named data source
-    \prop_get:NnNTF \g__lqt_data_sources_prop { #1 } #2 {} { %
-      % not found: treat #1 as literal filename
-      \tl_set:Nn #2 { #1 } %
-    } %
-  } %
-
-  \bool_if:NT \__lqt_verbose_bool { %
-    \msg_info:nnxx { liquidtex } { resolve-data-source } %
-    { #1 }{ #2 } %
-  }
-
-}
-
 \ExplSyntaxOff
 %</package>
 %\Finale

@@ -2,7 +2,6 @@
 %
 % - Fonts -%
 \usepackage{lmodern}
-\usepackage{FiraSans}
 \usepackage{expl3}
 \usepackage{fontspec}
 
@@ -68,15 +67,13 @@
 %- Even better refs -%
 \usepackage{cleveref}
 
-\usepackage[lining]{libertine}
 
 \IfFontExistsTF{Fira Sans}{%
   \setsansfont{Fira Sans}[Scale=MatchUppercase]
-}
-
+}{\setsansfont{Latin Modern Sans}}
 \IfFontExistsTF{Fira Mono}{%
-  \setmonofont{FiraCode Nerd Font Mono}[Scale=MatchLowercase,Contextuals=Alternate,Ligatures=TeX]
-}{}
+  \setmonofont{Fira Mono}[Scale=MatchLowercase]
+}{\setmonofont{Latin Modern Mono}}
 
 \definecolor{lqt-darkblue}{HTML}{000037}
 \definecolor{lqt-indigo}{HTML}{5862ED}

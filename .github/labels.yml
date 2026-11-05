@@ -94,3 +94,7 @@
   color: "f7c6c7"
   description: "Early idea or rough concept"
 
+
+- name: "status:in-review"
+  color: "7057ff"
+  description: "Implemented and tested on a branch; awaiting integration"

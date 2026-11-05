@@ -1,0 +1,14 @@
+Title: {{ title | upcase }}
+
+{% if user.active %}
+User: {{ user.name | capitalize }}
+{% else %}
+User: inactive
+{% endif %}
+
+Items:
+{% for item in items %}
+- {{ item | append: "!" }}
+{% endfor %}
+
+Published: {{ published_at | date: "%Y-%m-%d" }}

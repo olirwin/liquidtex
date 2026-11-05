@@ -1,0 +1,9 @@
+{%- if list -%}
+\begin{itemize}
+{% for i in list %}
+\item {{ i }}
+{% endfor %}
+\end{itemize}
+{%- else -%}
+No list in data :/
+{%- endif -%}

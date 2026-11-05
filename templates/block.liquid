@@ -1,0 +1,8 @@
+\section{ {{- title | capitalize -}} }
+
+
+{% if secrets %}
+	{{ secrets | join: ', ' }}
+{% else %}
+	{{ public }}
+{% endif %}

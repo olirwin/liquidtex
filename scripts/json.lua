@@ -22,7 +22,8 @@
 -- SOFTWARE.
 --
 
-local json = { _version = "0.1.2" }
+-- LiquidTeX modification: retain empty array/object identity when decoding.
+local json = { _version = "0.1.2", array_metatable = {}, object_metatable = {} }
 
 -------------------------------------------------------------------------------
 -- Encode
@@ -65,7 +66,7 @@ local function encode_table(val, stack)
 
   stack[val] = true
 
-  if rawget(val, 1) ~= nil or next(val) == nil then
+  if getmetatable(val) == json.array_metatable or (getmetatable(val) ~= json.object_metatable and (rawget(val, 1) ~= nil or next(val) == nil)) then
     -- Treat as array -- check keys are valid and it is not sparse
     local n = 0
     for k in pairs(val) do
@@ -278,7 +279,7 @@ end
 
 
 local function parse_array(str, i)
-  local res = {}
+  local res = setmetatable({}, json.array_metatable)
   local n = 1
   i = i + 1
   while 1 do
@@ -305,7 +306,7 @@ end
 
 
 local function parse_object(str, i)
-  local res = {}
+  local res = setmetatable({}, json.object_metatable)
   i = i + 1
   while 1 do
     local key, val
