@@ -34,6 +34,7 @@
 \RequirePackage{expl3}
 \RequirePackage{lqt-messages}
 \ExplSyntaxOn
+\bool_new:N \__lqt_cache_ready_bool
 %      Low-level helper: attempt to create directory #1 using the OS shell.
 \cs_new_protected:Npn \__lqt_mkdir:n #1
 {
@@ -148,6 +149,15 @@
     }
   
   \__lqt_mkdir:n { \tl_use:N \__lqt_cache_dir_tl }
+}
+
+\cs_new_protected:Nn \__lqt_ensure_cache_dir:
+{
+  \bool_if:NF \__lqt_cache_ready_bool
+    {
+      \__lqt_init_cache_dir:
+      \bool_set_true:N \__lqt_cache_ready_bool
+    }
 }
 
 % #1 = tl var to store the base name

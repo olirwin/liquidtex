@@ -1,0 +1,22 @@
+\documentclass{article}
+\usepackage{liquidtex}
+\errorcontextlines=10000
+
+\liquidsetup{
+  engine = lua,
+  data   = data/lua-minimal.yml,
+  no-cache,
+}
+
+\begin{document}
+
+\section*{Lua Liquid Minimal}
+
+\inputliquid{templates/lua-minimal.liquid}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: t
+%%% End:

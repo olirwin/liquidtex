@@ -1,0 +1,65 @@
+\documentclass{article}
+\usepackage{liquidtex}
+\usepackage{lmodern}
+\usepackage{lipsum}
+\errorcontextlines=10000
+\liquidsetup{
+  data   = data/data2.yml,
+  % outdir = .liquid-cache,
+  verbose,
+  engine-conf = {
+    path = template_parser,
+    positional,
+  },
+  %no-cache
+}
+
+\liquiddatasource{extra}{data/data.yml}
+
+\begin{document}
+
+
+Hello World!
+
+\inputliquid[extra]{templates/block.liquid}
+\inputliquid[data/data.yml]{templates/list.liquid}
+
+
+\begin{liquid}
+This is inline templating :) {{ school.name }}
+
+\sffamily\textbf{ {{- school.name -}} } --- {{ school.office }}
+\end{liquid}
+
+\begin{liquid}[data/data2.yml]
+This is inline templating :) {{ school.name }}
+
+\sffamily\textbf{ {{- school.name -}} } --- {{ school.office }}
+\end{liquid}
+
+\lipsum[2-4]
+
+This is now a completely different paragraph with %
+\liquidinline[extra]{a {{ school.office -}} }
+
+\begin{liquiddata}{cv}
+name: "Oliver"
+title: "PhD student"
+\end{liquiddata}
+
+\inputliquid[cv]{templates/cv.liquid}
+
+\begin{liquiddata}{extra}
+name: "John"
+title: "Bobatron"
+\end{liquiddata}
+
+\inputliquid[extra]{templates/cv.liquid}
+
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: t
+%%% End:

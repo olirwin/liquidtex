@@ -421,6 +421,7 @@ Running "make install" installs the files in the local TeX tree.
 \tl_new:N   \l__lqt_tmp_data_key_tl
 
 \tl_new:N   \l__lqt_tmp_filename_tl
+\tl_new:N   \l__lqt_lua_data_path_tl
 
 % IO
 \iow_new:N  \l__lqt_cache_iow
@@ -545,15 +546,109 @@ Running "make install" installs the files in the local TeX tree.
   \tl_if_eq:VnTF \__lqt_engine_tl { external } { %
     \__lqt_render:nn { #1 }{ #2 } %
   } { %
-    \msg_error:nnx { liquidtex } { engine-not-external }
-    { \tl_use:N \__lqt_engine_tl } %
+    \tl_if_eq:VnTF \__lqt_engine_tl { lua }
+      { \__lqt_lua_render:nn { #1 }{ #2 } }
+      {
+        \msg_error:nnx { liquidtex } { unknown-engine }
+          { \tl_use:N \__lqt_engine_tl }
+      }
   }
+}
+
+\cs_new_protected:Npn \__lqt_lua_prepare_data_path:n #1
+{
+  \tl_set:Nn \l__lqt_lua_data_path_tl { nil }
+  \tl_if_blank:nF { #1 }
+    { \tl_set:Nx \l__lqt_lua_data_path_tl { "\luaescapestring{#1}" } }
+}
+
+\cs_new_protected:Npn \__lqt_lua_render_do:nnn #1#2#3
+{
+  \bool_if:NT \__lqt_verbose_bool
+    {
+      \msg_info:nnxxx { liquidtex } { render-start }
+        {#1}{#2}{#3}
+    }
+  \__lqt_lua_prepare_data_path:n {#2}
+  \directlua{
+    local engine = require("scripts.liquid_engine")
+    engine.render{
+      template_path = "\luaescapestring{#1}",
+      data_path = \tl_use:N \l__lqt_lua_data_path_tl,
+      output_path = "\luaescapestring{#3}",
+    }
+  }
+  \bool_if:NT \__lqt_verbose_bool
+    {
+      \msg_info:nnx { liquidtex } { render-end } {#3}
+    }
+}
+
+\cs_new_protected:Npn \__lqt_lua_render_to_tex:nn #1#2
+{
+  \bool_if:NT \__lqt_verbose_bool
+    {
+      \msg_info:nnxxx { liquidtex } { render-start }
+        {#1}{#2}{direct-tex}
+    }
+  \__lqt_lua_prepare_data_path:n {#2}
+  \directlua{
+    local engine = require("scripts.liquid_engine")
+    engine.render{
+      template_path = "\luaescapestring{#1}",
+      data_path = \tl_use:N \l__lqt_lua_data_path_tl,
+      to_tex = true,
+    }
+  }
+  \bool_if:NT \__lqt_verbose_bool
+    {
+      \msg_info:nnx { liquidtex } { render-end } {direct-tex}
+    }
+}
+
+\cs_new_protected:Npn \__lqt_lua_render:nn #1#2
+{
+  \bool_if:NTF \__lqt_no_cache_bool
+    {
+      \__lqt_lua_render_to_tex:nn { #1 }{ #2 }
+    }
+    {
+      \__lqt_ensure_cache_dir:
+      \__lqt_cache_is_fresh:nnTF { #1 }{ #2 }
+        {
+          \bool_if:NT \__lqt_verbose_bool
+            {
+              \msg_info:nnxxx { liquidtex } { render-cache }
+                { \tl_use:N \l__lqt_output_file_tl }{ #1 }{ #2 }
+            }
+          \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
+            { }
+            {
+              \__lqt_compute_output_files:nn { #1 }{ #2 }
+              \__lqt_lua_render_do:nnn
+                { #1 }{ #2 }{ \tl_use:N \l__lqt_output_file_tl }
+            }
+        }
+        {
+          \__lqt_compute_output_files:nn { #1 }{ #2 }
+          \__lqt_lua_render_do:nnn
+            { #1 }{ #2 }{ \tl_use:N \l__lqt_output_file_tl }
+        }
+      \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
+        { }
+        {
+          \msg_error:nnx
+            { liquidtex } { render-output-missing }
+            { \tl_use:N \l__lqt_output_file_tl }
+        }
+    }
 }
 
 % Internal handler for inline inputs
 % #1 is the optional data argument
 % #2 is the contents of the template
 \cs_new_protected:Npn \__lqt_inline_input:nn #1#2 { %
+  \__lqt_ensure_cache_dir:
   % Increment inline counter
   \int_gincr:N \c__lqt_inlines_cnt_int
 
@@ -573,6 +668,7 @@ Running "make install" installs the files in the local TeX tree.
 % #1 is the data source alias
 % #2 is the data
 \cs_new_protected:Npn \__lqt_inline_data:nn #1#2 { %
+  \__lqt_ensure_cache_dir:
   % Increment inline counter
   \int_gincr:N \c__lqt_inline_data_cnt_int
 
@@ -592,6 +688,7 @@ Running "make install" installs the files in the local TeX tree.
 }
 
 \cs_new_protected:Npn \__lqt_inline_data_begin:n #1 { %
+  \__lqt_ensure_cache_dir:
   % Increment inline counter
   \int_gincr:N \c__lqt_inline_data_cnt_int
 
@@ -697,6 +794,8 @@ Running "make install" installs the files in the local TeX tree.
   if f then
     -- Extract directory part
     local dir = f:match("^(.*)[/\\].-$") or ""
+    local base = dir .. "/"
+    package.path = base .. "?.lua;" .. base .. "?/init.lua;" .. package.path
     -- Escape a few TeX specials just in case
     local function tex_escape(s)
       return (s:gsub("([%%#{}])", "\\%1"))
@@ -724,7 +823,12 @@ Running "make install" installs the files in the local TeX tree.
 %    \end{macrocode}
 %    \begin{macrocode}
 \AtBeginDocument{ %
-  \__lqt_init_cache_dir:
+  \tl_if_eq:VnTF \__lqt_engine_tl { lua }
+    {
+      \bool_if:NF \__lqt_no_cache_bool
+        { \__lqt_ensure_cache_dir: }
+    }
+    { \__lqt_ensure_cache_dir: }
 }
 \ExplSyntaxOff
 %</package>

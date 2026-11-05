@@ -25,6 +25,7 @@ inst: all
 	cp $(NAME).dtx $(UTREE)/source/latex/$(NAME)
 	cp $(NAME).sty $(UTREE)/tex/latex/$(NAME)
 	cp $(NAME).pdf $(UTREE)/doc/latex/$(NAME)
+	cp -r scripts $(UTREE)/tex/latex/$(NAME)
 install: all
 	sudo mkdir -p $(LOCAL)/{tex,source,doc}/latex/$(NAME)
 	sudo cp $(NAME).dtx $(LOCAL)/source/latex/$(NAME)
@@ -32,8 +33,9 @@ install: all
 	sudo cp $(NAME).pdf $(LOCAL)/doc/latex/$(NAME)
 	sudo cp lqt-*.sty $(LOCAL)/tex/latex/$(NAME)
 	sudo cp -r utils $(LOCAL)/source/latex/$(NAME)
+	sudo cp -r scripts $(LOCAL)/tex/latex/$(NAME)
 zip: all
 	ln -sf . $(NAME)
-	zip -Drq $(PWD)/$(NAME)-$(VERS).zip $(NAME)/{README.md,CHANGELOG.md,$(NAME).{pdf,dtx,pkg,drv},utils}
-	zip -Drq $(PWD)/$(NAME).zip $(NAME)/{README.md,CHANGELOG.md,$(NAME).{pdf,dtx,pkg,drv},utils}
+	zip -Drq $(PWD)/$(NAME)-$(VERS).zip $(NAME)/{README.md,CHANGELOG.md,$(NAME).{pdf,dtx,pkg,drv},utils,scripts}
+	zip -Drq $(PWD)/$(NAME).zip $(NAME)/{README.md,CHANGELOG.md,$(NAME).{pdf,dtx,pkg,drv},utils,scripts}
 	rm $(NAME)
