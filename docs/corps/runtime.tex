@@ -1,0 +1,135 @@
+\section{Runtime, tools, and workflow}
+\label{sec:runtime}
+
+Version 0.3.0 provides a shared renderer for native LuaLaTeX, the bundled external
+backend, and a companion command-line tool. The native backend requires
+\texttt{engine=lua} and does not require shell escape. The default external
+backend uses \texttt{texlua} and requires shell escape; it also supports pdfLaTeX.
+When a custom external executable is configured, it must accept the configured
+arguments, write its output file, and return a successful exit status. Merged data
+is supplied as JSON. Positional indices must be a permutation of 1, 2, 3.
+
+\subsection{Supported Liquid subset}
+
+Supported constructs include variable output, dotted and bracketed property
+paths, whitespace control, \texttt{if}/\texttt{elsif}/\texttt{else}, comparisons,
+\texttt{contains}, \texttt{and}/\texttt{or}, and array/object \texttt{for} loops.
+Array lookup follows Liquid's zero-based indexing. Array loops expose
+\texttt{forloop.index}, \texttt{index0}, \texttt{first}, \texttt{last}, and
+\texttt{length}. Available filters include \texttt{upcase}, \texttt{downcase},
+\texttt{capitalize}, \texttt{strip}, \texttt{strip\_newlines}, \texttt{append},
+\texttt{prepend}, \texttt{replace}, \texttt{replace\_first}, \texttt{default},
+\texttt{size}, \texttt{join}, \texttt{split}, and \texttt{date}. Replacement is
+literal, not a Lua pattern. Unsupported tags/filters are errors.
+
+This is a subset rather than a complete Liquid implementation. Includes,
+inheritance, assignments, loop modifiers, and full expression compatibility are
+not provided. Template and data strings become LaTeX source; escaping TeX special
+characters remains the template author's responsibility. Short inline expressions
+use normal TeX argument parsing: they must have balanced braces and cannot contain
+an unescaped percent comment. Use the verbatim \texttt{liquid} environment for
+multiline templates and Liquid tags. Neither inline interface should be used in
+moving arguments; use \verb|\sectionliquid| for sections.
+
+\subsection{Search paths and data merging}
+
+\begin{preamblecode}
+\liquidsetup{
+  template-path = {templates/, content/},
+  data-files = {base.yml, override.json},
+  data.pub = publications.json,
+  data = local.yml,
+  data-sources = {other = another.yml}
+}
+\end{preamblecode}
+
+The supplied template path is tried first, followed by configured directories in
+order. The first match wins. Relative inputs are resolved from the compilation
+working directory; absolute inputs are used directly. Search directories do not
+change the interpretation of data paths.
+
+Root objects in \texttt{data-files} are merged from left to right, recursively.
+Later scalar/array values replace earlier values, including empty arrays.
+Next, \texttt{data.NAME} files are loaded into corresponding named objects; names
+are processed in sorted order. Finally the selected default or per-call source
+is merged at the root and wins conflicts. A root array may be used alone for row
+rendering, but root merge sources must be objects. Aliases are independent source
+selectors. Adding \texttt{data-sources} preserves previously declared aliases and
+the default source.
+
+\subsection{Convenience commands}
+
+\begin{bodycode}
+% Template's first rendered line is the title; the rest is the body.
+\sectionliquid[Short TOC title]{section.liquid}
+% Each row receives item plus forloop metadata.
+\begin{itemize}
+  \liquidlist[publications]{cv.yml}{publication-row.liquid}
+\end{itemize}
+% Check syntax/data without inserting generated output.
+\liquidvalidate{section.liquid}
+% Log generated code without inserting it into the document.
+\inputliquid*{section.liquid}
+\end{bodycode}
+
+The optional section title is used by the table of contents. It should be a valid
+LaTeX moving argument; the generated title must fit on the first rendered line.
+The optional list path selects an array within the data; omit it for a root
+array. Wrong data structures produce an error. Row templates work inside tables,
+itemize, or arbitrary surrounding environments. Lists use the native or bundled
+renderer. Validation checks syntax in the supported subset and any configured
+data files; it cannot validate a custom external renderer's additional dialect.
+
+\subsection{Custom filters and diagnostics}
+
+\begin{preamblecode}
+\liquidsetup{engine=lua,diagnostics,verbose=trace,debug-dir=debug}
+\liquidfilter{shout}{function(value)
+  return string.upper(value) .. "!"
+end}
+\end{preamblecode}
+
+Custom filters require the native backend and should be pure functions of their
+arguments. The function body is Lua source in a normal TeX argument; avoid TeX
+special characters or register more complex functions directly from a Lua module.
+External state/upvalues are not automatically tracked: use \texttt{no-cache} for
+those functions. The native renderer reports template paths, line information,
+and a Lua traceback on failures; external failure output and exit status are
+forwarded into the LaTeX log.
+
+\texttt{verbose=false} or \texttt{off} disables informational logging;
+\texttt{true}/\texttt{basic} reports renders and cache hits, \texttt{full} adds input
+paths, and \texttt{trace} adds bridge/renderer commands. Errors remain visible at
+all levels. \texttt{debug-dir} stores template, merged data, output, and log
+snapshots with stable cache keys. \texttt{diagnostics} collects request counts,
+cache-hit counts, and CPU time; \verb|\liquidstats| prints them. CPU time excludes
+external child-process wall time.
+
+POSIX quoting supports spaces and apostrophes. Windows supports ordinary paths
+with spaces and rejects shell metacharacters rather than executing an ambiguous
+command. Windows end-to-end verification and broader path support remain planned.
+
+\subsection{CLI and multi-output pipelines}
+
+\begin{terminalblock}
+texlua scripts/liquidtex.lua render --template cv.liquid --data cv.yml
+texlua scripts/liquidtex.lua validate --template cv.liquid --data cv.yml
+texlua scripts/liquidtex.lua inspect --data cv.yml
+texlua scripts/liquidtex.lua pipeline examples/pipeline.json
+\end{terminalblock}
+
+The CLI can render to standard output or \texttt{--output FILE}, validate syntax
+and configured data without typesetting, and inspect merged data as JSON.
+\texttt{--data-file FILE} is repeatable; \texttt{--data FILE} is applied last.
+Use \texttt{--cache} to enable persistent CLI caching and \texttt{--no-cache} to
+force rendering. Run \texttt{--help} for the full command summary.
+
+A pipeline is a YAML/JSON object with an \texttt{outputs} array. Each output
+requires \texttt{template} and \texttt{output}, and may set \texttt{data},
+\texttt{data-files} (written \texttt{data\_files} in configuration), or
+\texttt{namespaces}. Shared values can be supplied at the root. All paths are
+relative to the configuration file's directory. Pipelines cache each output
+independently, rerun only affected jobs when inputs change, and update destination
+files only when their contents differ. See the tracked CV example for a minimal
+complete configuration. These pipelines render text; PDF compilation remains the
+responsibility of LaTeX or a build tool.

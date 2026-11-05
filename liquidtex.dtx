@@ -19,40 +19,135 @@
 \iffalse
 %</internal>
 %<*readme>
-| liquidtex: | LaTeX with integrated Liquid templating                        |
-|------------|----------------------------------------------------------------|
-| Author:    | Oliver Irwin                                                   |
-| E-mail:    | oliver@irwin.sh                                                |
-| License:   | Released under the LaTeX Project Public License v1.3c or later |
-| See:       | http://www.latex-project.org/lppl.txt                          |
-
-Running `make` generates the derived files README, liquidtex.pdf and liquidtex.sty.
-Running `make inst` installs the files in the user's TeX tree.
-Running `make install` installs the files in the local TeX tree.
-
 # liquidtex
 
-`liquidtex` is a LaTeX package that integrates **Liquid templates**
-directly into the LaTeX compilation process. It allows you to write LaTeX
-documents that include dynamic placeholders and conditional logic, rendered
-automatically from structured data sources (e.g. YAML, JSON) at compile
-time.
+Liquid templates integrated into LaTeX compilation, with YAML/JSON data, inline
+blocks, content-based caching, and a native Lua backend.
 
-## Features
+Released under the LaTeX Project Public License v1.3c or later.
 
-- Seamless integration of **Liquid templating** within LaTeX documents.
-- Support for **YAML** data sources.
-- Verbose **logging** and **error reporting** for debugging template
-  rendering.
-- Configurable **options** for data source paths, compilation behaviour,
-  and output verbosity.
-- Compatible with `.sty` or `.dtx` distribution formats.
+## Quick start
 
-## Use Cases
+Extract the package from a checkout with `make extract` (GNU Make and TeX Live).
+Create `person.yml`:
 
-- Auto-generated CVs or reports based on structured data.
-- Dynamic lecture notes, syllabi, or publication lists.
-- Research documents where repetitive elements are driven by metadata.
+```yaml
+name: Oliver
+```
+
+Then compile this document with `lualatex -no-shell-escape document.tex`:
+
+```latex
+\documentclass{article}
+\usepackage[engine=lua,data=person.yml]{liquidtex}
+\begin{document}
+Hello \liquidinline{ {{ name }} }!
+\begin{liquid}
+{% if name %}\textbf{ {{ name }} }{% endif %}
+\end{liquid}
+\end{document}
+```
+
+Keep this complete checkout alongside the document, or install the package with
+`make inst`. Copying only `liquidtex.sty` is insufficient: the helper packages and
+Lua files under `scripts/` are runtime dependencies.
+
+## Rendering and data
+
+- `\inputliquid[alias or file]{template}` renders a file.
+- `\inputliquid*{template}` logs generated code without typesetting it.
+- `\liquidinline[data]{expression}` renders a short, brace-balanced expression.
+- The `liquid` environment captures templates verbatim, including `{% ... %}`.
+- `\begin{liquiddata}{alias}` captures verbatim YAML; omitting `{alias}` replaces
+  the default source. Put content and the end marker on separate lines.
+- `\liquiddatasource{alias}{file}` and `data-sources={alias=file,...}` add aliases.
+- `template-path={templates/,content/}` searches directories in order after the
+  supplied path. Paths are relative to the compilation working directory.
+- `data-files={base.yml,override.json}` recursively merges root objects in order;
+  later scalars/arrays replace earlier ones. `data.pub=publications.json` adds
+  the namespace `pub`. The selected default/per-call data is applied last.
+- `\sectionliquid[TOC title]{template}` uses the first rendered line as the title
+  and remaining lines as the section body.
+- `\liquidlist[array.path]{data}{row-template}` renders each item, exposed as
+  `item`, in order. Omit the optional path for a root array.
+
+The native engine implements a **Liquid subset**, shared with the bundled
+external renderer: values, paths, whitespace control, conditionals, loops,
+`forloop`, and common string/list/date filters. Unsupported tags and filters raise
+errors. Includes, inheritance, assignments, loop modifiers, and full Liquid
+expression compatibility remain future work. Template/data text is emitted as
+LaTeX; escape TeX special characters in your templates/data as needed.
+
+## Backends and debugging
+
+`engine=lua` uses LuaLaTeX without external processes or shell escape. The default
+`engine=external` uses the bundled renderer in a `texlua` process and requires
+`-shell-escape`; it also works with pdfLaTeX. To use another renderer:
+
+```latex
+\liquidsetup{engine-conf={
+  path=/path/to/renderer,
+  arg-style=positional,
+  template-index=1,data-index=2,output-index=3
+}}
+```
+
+The indices must be a permutation of 1,2,3. `arg-style=named` instead supplies
+`--template=... --data=... --output=...`. `arguments={...}` adds fixed arguments
+before them. Merged data is passed as generated JSON. The custom renderer must
+write the output file and exit successfully. `liquidlist` uses the native/bundled
+renderer; validation checks the bundled subset, not custom engine dialects.
+
+`verbose=basic|full|trace`, `debug-dir=debug`, `diagnostics`, and `\liquidstats`
+provide logs, input/output snapshots, and request/cache-hit/CPU counters.
+`\liquidvalidate{template}` validates without inserting output. Lua-only custom
+filters can be registered with:
+
+```latex
+\liquidfilter{shout}{function(value) return string.upper(value) .. "!" end}
+```
+
+Custom filters should be pure functions of their arguments. External state and
+upvalues cannot be tracked as cache dependencies; use `no-cache` if needed.
+
+## Cache and build integration
+
+The default `outdir=liquidtex-cache` is resolved relative to the TeX auxiliary
+output directory when `use-auxdir=true`. The visible directory name also works
+with LuaTeX's default output restrictions. Hidden directories or absolute output
+paths may be rejected by TeX; choose an allowed relative directory. `no-cache`
+forces every request to render and bypasses persistent cache output. Inline
+capture and request/result files still use the TeX auxiliary directory.
+
+Cache identities include document, full input paths, and engine configuration;
+content signatures include input contents and bundled renderer sources. Input
+files are recorded for `latexmk`, and output digests in `.aux` request another run
+when content changes. POSIX shell arguments support spaces/apostrophes; Windows
+arguments support ordinary paths with spaces but reject shell metacharacters.
+Windows end-to-end verification remains outstanding.
+
+## CLI, tests, documentation, and installation
+
+```sh
+texlua scripts/liquidtex.lua render --template templates/cv.liquid --data data/data.yml
+texlua scripts/liquidtex.lua validate --template templates/cv.liquid
+texlua scripts/liquidtex.lua inspect --data data/data.yml
+texlua scripts/liquidtex.lua pipeline examples/pipeline.json
+make test       # Python 3, TeX Live (LuaLaTeX/pdfLaTeX/latexmk), pdftotext
+make            # extract package and build the separate user manual
+make inst       # install complete package in TEXMFHOME
+make zip        # create source + runtime + documentation archives
+```
+
+The manual uses LuaLaTeX, latexmk, minted (with its executable), TeX documentation
+packages, and shell escape. Fira fonts are optional; Latin Modern is the fallback.
+`make install` targets TEXMFLOCAL; run it with the permissions appropriate to that
+TeX tree. Both installation targets accept `DESTDIR` for staging. Neither invokes
+sudo. Run `mktexlsr` yourself when your TeX tree requires its filename database.
+
+See [PROJECT_STATUS.md](PROJECT_STATUS.md) for current work and verification,
+[ROADMAP.md](ROADMAP.md) for future direction, and the
+[GitHub issues](https://github.com/olirwin/liquidtex/issues) for tracked requests.
 %</readme>
 %<*ctanomat>
 % This is a description file for ctan-o-mat.
@@ -77,7 +172,7 @@ time.
 % This field contains the version of the package.
 % The value is optional.
 % The value is restricted to 32 characters.
-\version{0.1.0 2025-11-13}
+\version{0.3.0 2026-11-05}
 % -------------------------------------------------------------------------
 % This field contains the name of the author(s).
 % The value is optional.
@@ -202,6 +297,33 @@ time.
 \file{liquidtex.zip}
 %</ctanomat>
 %<*changelog>
+# Changelog
+
+## 0.3.0 — 2026-11-05
+
+- Restore package loading and isolate the native Lua backend from pdfLaTeX.
+- Ship runtime libraries and reproducible example data/templates.
+- Share a content-based cache/runtime between native and external rendering;
+  honor no-cache, detect input/configuration changes, avoid basename collisions,
+  and include cached output once.
+- Support quoted positional/named external commands with exit-status checks and
+  stderr in the LaTeX log; supply a bundled external renderer and companion CLI.
+- Add template paths, additive aliases, ordered YAML/JSON merging and namespaces.
+- Preserve verbatim inline templates/data; support default inline YAML blocks.
+- Add debug snapshots, starred logging, verbosity levels, validation, statistics,
+  custom native filters, section/TOC helpers, and array row rendering.
+- Add auxiliary output-directory support, dependency recording, output rerun
+  markers, and cached CLI multi-output pipelines.
+- Fix whitespace control, underscored filters, literal replacement, and Lua errors.
+- Repair manual/build/install/archive recipes; add integration tests and CI.
+
+## 0.2.0 — 2025-11-21
+
+- Inline template blocks/expressions, named sources, and inline YAML data.
+
+## 0.1.0 — 2025-11-13
+
+- Initial external-engine integration, configuration, caching, and documentation.
 %</changelog>
 %
 %<*internal>
@@ -212,8 +334,8 @@ time.
 \fi
 %</internal>
 %<*package|install>
-\def\liquidtexversion{0.2.0}
-\def\liquidtexdate{2025-11-21}
+\def\liquidtexversion{0.3.0}
+\def\liquidtexdate{2026-11-05}
 %</package|install>
 %<*install>
 \input l3docstrip.tex
@@ -368,468 +490,302 @@ Running "make install" installs the files in the local TeX tree.
 %    \begin{macrocode}
 %<*package>
 \RequirePackage{expl3,xparse}
-\ProvidesExplPackage
-  {liquidtex}
-  {\liquidtexdate}
-  {\liquidtexversion}
+\ProvidesExplPackage{liquidtex}{\liquidtexdate}{\liquidtexversion}
   {LaTeX with integrated Liquid templating}
-
-\ExplSyntaxOn
-
-% internal configuration variables
-\bool_new:N \__lqt_verbose_bool
-\bool_new:N \__lqt_use_auxdir_bool
-\bool_new:N \__lqt_no_cache_bool
-\tl_new:N   \__lqt_engine_tl
-\tl_new:N   \__lqt_outdir_tl
-
-\tl_new:N   \__lqt_engine_path_tl
-\tl_new:N   \__lqt_engine_arg_style_tl
-\int_new:N  \__lqt_engine_template_index_int
-\int_new:N  \__lqt_engine_data_index_int
-\int_new:N  \__lqt_engine_output_index_int
-
-\tl_new:N   \l__lqt_inline_template_tl
-\tl_new:N   \l__lqt_inline_data_tl
-\tl_new:N   \l__lqt_inline_tmp_tl
-\iow_new:N  \l__lqt_inline_iow
-
-\tl_new:N  \l__lqt_inline_data_name_tl
-\tl_new:N  \l__lqt_inline_data_file_tl
-\iow_new:N \l__lqt_inline_data_iow
-
-% data collections
-\prop_new:N \g__lqt_data_sources_prop
-
-% Custom counters
-\int_new:N  \c__lqt_inlines_cnt_int
-\int_new:N  \c__lqt_inline_data_cnt_int
-
-% internal derived value: effective cache directory
-\tl_new:N   \__lqt_cache_dir_tl
-
-% temp variables
-\tl_new:N   \l__lqt_output_file_tl
-\tl_new:N   \l__lqt_cmd_line_tl
-\tl_new:N   \l__lqt_tmpl_base_tl
-\tl_new:N   \l__lqt_data_base_tl
-\tl_new:N   \l__lqt_tmp_dir_tl
-\tl_new:N   \l__lqt_tmp_ext_tl
-\tl_new:N   \l__lqt_tmp_template_tl
-\tl_new:N   \l__lqt_tmp_data_tl
-\tl_new:N   \l__lqt_engine_log_file_tl
-\tl_new:N   \l__lqt_tmp_data_key_tl
-
-\tl_new:N   \l__lqt_tmp_filename_tl
-\tl_new:N   \l__lqt_lua_data_path_tl
-
-% IO
-\iow_new:N  \l__lqt_cache_iow
-
-
-%    \end{macrocode}
-%
-% \subsection{Key definitions}
-%
-% We define a key family \texttt{liquidtex} with one boolean key.
-%
-%    \begin{macrocode}
-\keys_define:nn { liquidtex } { %
-  verbose .bool_set:N = \__lqt_verbose_bool,
-  verbose .initial:n  = false,
-  verbose .default:n  = true,
-
-  outdir  .tl_set:N   = \__lqt_outdir_tl,
-  outdir  .initial:n  = {.liquid-cache},
-  outdir  .usage:n    = preamble,
-
-  use-auxdir .bool_set:N = \__lqt_use_auxdir_bool,
-  use-auxdir .initial:n  = true,
-  use-auxdir .default:n  = true,
-  use-auxdir .usage:n    = preamble,
-
-  no-cache .bool_set:N = \__lqt_no_cache_bool,
-  no-cache .initial:n  = false,
-  no-cache .default:n  = true,
-  no-cache .usage:n    = preamble,
-
-  engine .choice:,
-  engine / lua .code:n      =
-  { \tl_set:Nn \__lqt_engine_tl { lua } },
-  engine / external .code:n =
-  { \tl_set:Nn \__lqt_engine_tl { external } },
-  engine / unknown .code:n =
-  {
-    \msg_fatal:nnx { liquidtex } { unknown-engine } {#1}
-  },
-
-  engine .initial:n = external,
-  engine .usage:n   = preamble,
-
-  engine-conf .code:n =
-  { \keys_set:nn { liquidtex / engine-conf } { #1 } },
-  engine-conf .usage:n = preamble,
-
-  data .code:n = { %
-    \prop_gput:Nnn \g__lqt_data_sources_prop { default } { #1 }
-  },
-  data .initial:n  = {},
-
-  data-sources .code:n = { %
-    \prop_gset_from_keyval:Nn \g__lqt_data_sources_prop { #1 }
-  },
-}
-
-\keys_define:nn { liquidtex / engine-conf } { %
-  path .tl_set:N   = \__lqt_engine_path_tl,
-  path .initial:n  = {},
-
-  positional .code:n = { \tl_set:Nn \__lqt_engine_arg_style_tl { positional } },
-  named      .code:n = { \tl_set:Nn \__lqt_engine_arg_style_tl { named } },
-
-  arg-style .choice:,
-  arg-style / positional .code:n =
-  { \tl_set:Nn \__lqt_engine_arg_style_tl { positional } },
-  arg-style / named .code:n =
-  { \tl_set:Nn \__lqt_engine_arg_style_tl { named } },
-  arg-style .initial:n = positional,
-
-  template-index .int_set:N = \__lqt_engine_template_index_int,
-  template-index .initial:n = 1,
-
-  data-index .int_set:N = \__lqt_engine_data_index_int,
-  data-index .initial:n = 2,
-
-  output-index .int_set:N = \__lqt_engine_output_index_int,
-  output-index .initial:n = 3,
-}
-%    \end{macrocode}
-% Process package options
-%
-%    \begin{macrocode}
-\ProcessKeyOptions[liquidtex]
-%    \end{macrocode}
-%
-% \subsection{Package requirements}
-%    \begin{macrocode}
-%% useful for file modification information - notably cache here
-\RequirePackage{filemod}
-%% useful for inline input
 \RequirePackage{fancyvrb}
-%% internal message module
-\RequirePackage{lqt-messages}
-\RequirePackage{lqt-files}
-\RequirePackage{lqt-engine-external}
-\RequirePackage{lqt-data}
-%    \end{macrocode}
-% \subsection{Public configuration command}
-%
-%    \begin{macrocode}
-\NewDocumentCommand{\liquidsetup}{ m }{ \keys_set:nn { liquidtex } { #1 } }
-%    \end{macrocode}
-%
-% \subsection{Liquid rendering}
-%    \begin{macrocode}
-
-% -------------------------------------------------------------------------
-%                       INTERNAL INTERFACE HANDLING
-% -------------------------------------------------------------------------
-
-\cs_new_protected:Npn \__lqt_input_liquid:nn #1#2 { %
-  % Check that the template file exists
-  \IfFileExists{ #1 }{}{ %
-    \msg_error:nnx
-    { liquidtex } { missing-template }
-    { #1 }
-  }
-
-  \tl_if_eq:VnTF \__lqt_engine_tl { external } { %
-    \__lqt_render:nn { #1 }{ #2 } %
-  } { %
-    \tl_if_eq:VnTF \__lqt_engine_tl { lua }
-      { \__lqt_lua_render:nn { #1 }{ #2 } }
+\ExplSyntaxOn
+\bool_new:N \__lqt_verbose_bool
+\bool_new:N \__lqt_no_cache_bool
+\bool_new:N \__lqt_use_auxdir_bool
+\bool_new:N \__lqt_star_bool
+\bool_new:N \__lqt_success_bool
+\bool_new:N \__lqt_diagnostics_bool
+\bool_new:N \__lqt_changed_bool
+\bool_new:N \__lqt_native_ready_bool
+\int_new:N \g__lqt_inline_int
+\int_new:N \g__lqt_render_int
+\int_new:N \g__lqt_hit_int
+\fp_new:N \g__lqt_duration_fp
+\prop_new:N \g__lqt_data_sources_prop
+\prop_new:N \g__lqt_namespaces_prop
+\prop_new:N \g__lqt_previous_prop
+\clist_new:N \__lqt_template_paths_clist
+\clist_new:N \__lqt_data_files_clist
+\clist_new:N \__lqt_arguments_clist
+\tl_new:N \__lqt_engine_tl
+\tl_new:N \__lqt_outdir_tl
+\tl_new:N \__lqt_debug_dir_tl
+\tl_new:N \__lqt_engine_path_tl
+\tl_new:N \__lqt_arg_style_tl
+\tl_new:N \__lqt_log_level_tl
+\int_new:N \__lqt_template_index_int
+\int_new:N \__lqt_data_index_int
+\int_new:N \__lqt_output_index_int
+\tl_new:N \l__lqt_template_tl
+\tl_new:N \l__lqt_data_tl
+\tl_new:N \l__lqt_inline_tl
+\tl_new:N \l__lqt_alias_tl
+\tl_new:N \l__lqt_runtime_tl
+\tl_new:N \l__lqt_bridge_tl
+\tl_new:N \l__lqt_request_tl
+\tl_new:N \l__lqt_result_tl
+\tl_new:N \l__lqt_output_tl
+\tl_new:N \l__lqt_log_tl
+\tl_new:N \l__lqt_json_tl
+\tl_new:N \l__lqt_collection_tl
+\tl_new:N \l__lqt_quote_tl
+\tl_new:N \l__lqt_command_tl
+\tl_new:N \l__lqt_action_tl
+\tl_new:N \l__lqt_section_toc_tl
+\tl_new:N \l__lqt_array_key_tl
+\tl_new:N \l__lqt_line_tl
+\iow_new:N \l__lqt_request_iow
+\iow_new:N \l__lqt_inline_iow
+\ior_new:N \l__lqt_ior
+\msg_new:nnn {liquidtex}{runtime-failed}
+  {Liquid~rendering~failed.~#1~See~the~preceding~liquidtex~log~messages.}
+\msg_new:nnn {liquidtex}{lua-required}
+  {engine=lua~and~custom~Lua~filters~require~LuaLaTeX.}
+\msg_new:nnn {liquidtex}{rerun}
+  {Liquid~output~changed.~Rerun~to~get~Liquid~output~right.}
+\msg_new:nnn {liquidtex}{native-filter-only}
+  {Custom~filters~require~engine=lua.}
+\msg_new:nnn {liquidtex}{unknown-option}{Unknown~option~'#1'.}
+\RequirePackage{lqt-messages,lqt-files,lqt-data,lqt-engine-external}
+\ExplSyntaxOn
+\keys_define:nn {liquidtex}
+  {
+    verbose .code:n =
       {
-        \msg_error:nnx { liquidtex } { unknown-engine }
-          { \tl_use:N \__lqt_engine_tl }
+        \str_case:nnF {#1}
+          {{false}{\tl_set:Nn \__lqt_log_level_tl {off}}
+           {true}{\tl_set:Nn \__lqt_log_level_tl {basic}}
+           {off}{\tl_set:Nn \__lqt_log_level_tl {off}}
+           {basic}{\tl_set:Nn \__lqt_log_level_tl {basic}}
+           {full}{\tl_set:Nn \__lqt_log_level_tl {full}}
+           {trace}{\tl_set:Nn \__lqt_log_level_tl {trace}}}
+          {\msg_error:nnn {liquidtex}{unknown-option}{verbose=#1}}
+        \str_if_eq:VnTF \__lqt_log_level_tl {off}
+          {\bool_set_false:N \__lqt_verbose_bool}
+          {\bool_set_true:N \__lqt_verbose_bool}
+      },
+    verbose .initial:n = false,
+    verbose .default:n = true,
+    trace-engine .meta:n = {verbose=trace},
+    diagnostics .bool_set:N = \__lqt_diagnostics_bool,
+    diagnostics .default:n = true,
+    no-cache .bool_set:N = \__lqt_no_cache_bool,
+    no-cache .default:n = true,
+    outdir .tl_set:N = \__lqt_outdir_tl,
+    outdir .initial:n = liquidtex-cache,
+    outdir .usage:n = preamble,
+    use-auxdir .bool_set:N = \__lqt_use_auxdir_bool,
+    use-auxdir .initial:n = true,
+    use-auxdir .default:n = true,
+    use-auxdir .usage:n = preamble,
+    debug-dir .tl_set:N = \__lqt_debug_dir_tl,
+    template-path .clist_set:N = \__lqt_template_paths_clist,
+    data-files .clist_set:N = \__lqt_data_files_clist,
+    data .code:n = {\prop_gput:Nnn \g__lqt_data_sources_prop {default}{#1}},
+    data .initial:n = {},
+    data-sources .code:n =
+      {\keyval_parse:NNn \__lqt_alias_missing:n \__lqt_alias_set:nn {#1}},
+    engine .choice:,
+    engine/external .code:n = {\tl_set:Nn \__lqt_engine_tl {external}},
+    engine/lua .code:n = {\tl_set:Nn \__lqt_engine_tl {lua}},
+    engine .initial:n = external,
+    engine .usage:n = preamble,
+    engine-conf .code:n = {\keys_set:nn {liquidtex/engine-conf}{#1}},
+    engine-conf .usage:n = preamble,
+    unknown .code:n =
+      {
+        \exp_args:NnV \regex_match:nnTF {\A data\. .+ \Z} \l_keys_key_str
+          {
+            \tl_set:Nx \l_tmpa_tl {\str_range:Nnn \l_keys_key_str {6}{-1}}
+            \prop_gput:NVn \g__lqt_namespaces_prop \l_tmpa_tl {#1}
+          }
+          {\msg_error:nnx {liquidtex}{unknown-option}{\l_keys_key_str}}
       }
   }
-}
-
-\cs_new_protected:Npn \__lqt_lua_prepare_data_path:n #1
-{
-  \tl_set:Nn \l__lqt_lua_data_path_tl { nil }
-  \tl_if_blank:nF { #1 }
-    { \tl_set:Nx \l__lqt_lua_data_path_tl { "\luaescapestring{#1}" } }
-}
-
-\cs_new_protected:Npn \__lqt_lua_render_do:nnn #1#2#3
-{
-  \bool_if:NT \__lqt_verbose_bool
-    {
-      \msg_info:nnxxx { liquidtex } { render-start }
-        {#1}{#2}{#3}
-    }
-  \__lqt_lua_prepare_data_path:n {#2}
-  \directlua{
-    local engine = require("scripts.liquid_engine")
-    engine.render{
-      template_path = "\luaescapestring{#1}",
-      data_path = \tl_use:N \l__lqt_lua_data_path_tl,
-      output_path = "\luaescapestring{#3}",
-    }
+\keys_define:nn {liquidtex/engine-conf}
+  {
+    path .tl_set:N = \__lqt_engine_path_tl,
+    arguments .clist_set:N = \__lqt_arguments_clist,
+    arg-style .choices:nn = {positional,named}
+      {\tl_set_eq:NN \__lqt_arg_style_tl \l_keys_choice_tl},
+    arg-style .initial:n = positional,
+    positional .meta:n = {arg-style=positional},
+    named .meta:n = {arg-style=named},
+    template-index .int_set:N = \__lqt_template_index_int,
+    template-index .initial:n = 1,
+    data-index .int_set:N = \__lqt_data_index_int,
+    data-index .initial:n = 2,
+    output-index .int_set:N = \__lqt_output_index_int,
+    output-index .initial:n = 3
   }
-  \bool_if:NT \__lqt_verbose_bool
-    {
-      \msg_info:nnx { liquidtex } { render-end } {#3}
-    }
-}
-
-\cs_new_protected:Npn \__lqt_lua_render_to_tex:nn #1#2
-{
-  \bool_if:NT \__lqt_verbose_bool
-    {
-      \msg_info:nnxxx { liquidtex } { render-start }
-        {#1}{#2}{direct-tex}
-    }
-  \__lqt_lua_prepare_data_path:n {#2}
-  \directlua{
-    local engine = require("scripts.liquid_engine")
-    engine.render{
-      template_path = "\luaescapestring{#1}",
-      data_path = \tl_use:N \l__lqt_lua_data_path_tl,
-      to_tex = true,
-    }
+\ProcessKeyOptions[liquidtex]
+\cs_new_protected:Npn \__lqt_log:nn #1#2
+  {
+    \bool_if:NT \__lqt_verbose_bool
+      {
+        \str_if_eq:nnTF {#1}{basic}
+          {\iow_log:x {liquidtex:~#2}}
+          {\str_if_eq:VnF \__lqt_log_level_tl {basic}{\iow_log:x {liquidtex:~#2}}}
+      }
   }
-  \bool_if:NT \__lqt_verbose_bool
-    {
-      \msg_info:nnx { liquidtex } { render-end } {direct-tex}
-    }
-}
-
-\cs_new_protected:Npn \__lqt_lua_render:nn #1#2
-{
-  \bool_if:NTF \__lqt_no_cache_bool
-    {
-      \__lqt_lua_render_to_tex:nn { #1 }{ #2 }
-    }
-    {
-      \__lqt_ensure_cache_dir:
-      \__lqt_cache_is_fresh:nnTF { #1 }{ #2 }
-        {
-          \bool_if:NT \__lqt_verbose_bool
-            {
-              \msg_info:nnxxx { liquidtex } { render-cache }
-                { \tl_use:N \l__lqt_output_file_tl }{ #1 }{ #2 }
-            }
-          \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
-            { }
-            {
-              \__lqt_compute_output_files:nn { #1 }{ #2 }
-              \__lqt_lua_render_do:nnn
-                { #1 }{ #2 }{ \tl_use:N \l__lqt_output_file_tl }
-            }
-        }
-        {
-          \__lqt_compute_output_files:nn { #1 }{ #2 }
-          \__lqt_lua_render_do:nnn
-            { #1 }{ #2 }{ \tl_use:N \l__lqt_output_file_tl }
-        }
-      \InputIfFileExists{\tl_use:N \l__lqt_output_file_tl}
-        { }
-        {
-          \msg_error:nnx
-            { liquidtex } { render-output-missing }
-            { \tl_use:N \l__lqt_output_file_tl }
-        }
-    }
-}
-
-% Internal handler for inline inputs
-% #1 is the optional data argument
-% #2 is the contents of the template
-\cs_new_protected:Npn \__lqt_inline_input:nn #1#2 { %
-  \__lqt_ensure_cache_dir:
-  % Increment inline counter
-  \int_gincr:N \c__lqt_inlines_cnt_int
-
-  % Get template cache filename
-  \__lqt_compute_inline_template_filename:
-
-  \tl_set:Nn \l__lqt_inline_data_tl { #1 }
-
-  % Store template in cache file
-  \__lqt_write_to_cache_file:Vn \l__lqt_inline_template_tl { #2 }
-
-  % Resolve which data file to use:
-  \__lqt_resolve_data_source:nN { #1 } \l__lqt_tmp_data_tl
-}
-
-% Internal handler for inline data
-% #1 is the data source alias
-% #2 is the data
-\cs_new_protected:Npn \__lqt_inline_data:nn #1#2 { %
-  \__lqt_ensure_cache_dir:
-  % Increment inline counter
-  \int_gincr:N \c__lqt_inline_data_cnt_int
-
-  % Get cache filename
-  \__lqt_compute_inline_data_filename:
-
-  % Store data in cache file
-  \__lqt_write_to_cache_file:Vn \l__lqt_inline_data_file_tl { #2 }
-
-  \prop_if_in:NeT \g__lqt_data_sources_prop { #1 } { %
-    \msg_warn:nnn { liquidtex } { redefining-data } { #1 } %
+\cs_new_protected:Npn \__lqt_native_init:
+  {
+    \sys_if_engine_luatex:TF
+      {
+        \bool_if:NF \__lqt_native_ready_bool
+          {
+            \__lqt_locate_runtime:
+            \directlua{liquidtex_runtime=assert(loadfile(assert(kpse.find_file("\luaescapestring{\l__lqt_runtime_tl}","tex"))))(assert(kpse.find_file("\luaescapestring{\l__lqt_runtime_tl}","tex")))}
+            \bool_gset_true:N \__lqt_native_ready_bool
+          }
+      }
+      {\msg_fatal:nn {liquidtex}{lua-required}}
   }
-
-  \prop_gput:Nnx \g__lqt_data_sources_prop
-  { #1 }
-  { \tl_use:N \l__lqt_inline_data_file_tl }
-}
-
-\cs_new_protected:Npn \__lqt_inline_data_begin:n #1 { %
-  \__lqt_ensure_cache_dir:
-  % Increment inline counter
-  \int_gincr:N \c__lqt_inline_data_cnt_int
-
-  % Set data key name
-  \tl_set:Nn \l__lqt_tmp_data_key_tl { #1 }
-
-  \prop_if_in:NeT \g__lqt_data_sources_prop { %
-    \tl_use:N \l__lqt_tmp_data_key_tl %
-  } { %
-    \msg_warning:nnx { liquidtex } { redefining-data } %
-    { \tl_use:N \l__lqt_tmp_data_key_tl } %
+\cs_new_protected:Npn \__lqt_render:nn #1#2
+  {
+    \__lqt_resolve_template:n {#1}
+    \__lqt_resolve_data:n {#2}
+    \__lqt_record_file:n {\l__lqt_template_tl}
+    \tl_if_blank:VF \l__lqt_data_tl {\__lqt_record_file:n {\l__lqt_data_tl}}
+    \clist_map_inline:Nn \__lqt_data_files_clist {\__lqt_record_file:n {##1}}
+    \prop_map_inline:Nn \g__lqt_namespaces_prop {\__lqt_record_file:n {##2}}
+    \__lqt_log:nn {full}{template=\l__lqt_template_tl,~data=\l__lqt_data_tl}
+    \__lqt_write_request:
+    \__lqt_invoke:
+    \bool_if:NT \__lqt_success_bool
+      {
+        \str_if_eq:VnF \l__lqt_action_tl {validate}
+          {
+            \bool_if:NTF \__lqt_star_bool
+              {\__lqt_log_file:n {\l__lqt_output_tl}}
+              {\file_input:V \l__lqt_output_tl}
+          }
+      }
   }
-
-  % Get cache filename
-  \__lqt_compute_inline_data_filename:
-
-  \__lqt_get_file_base_name:nx \l__lqt_tmp_filename_tl { %
-    \tl_use:N \l__lqt_inline_data_file_tl %
-  } %
-  \tl_put_right:Nn \l__lqt_tmp_filename_tl { .tmp }
-
-  % Now switch out of expl3 and open VerbatimOut on that file
-  \ExplSyntaxOff %
-  \VerbatimEnvironment
-  \begin{VerbatimOut}{\l__lqt_tmp_filename_tl} %
-}
-
-\cs_new_protected:Npn \__lqt_inline_data_end: { %
-  \end{VerbatimOut}
-  \ExplSyntaxOn
-
-  \__lqt_mv:xx { %
-    \tl_use:N \l__lqt_tmp_filename_tl%
-  } { %
-    \tl_use:N \l__lqt_inline_data_file_tl
-  } %
-
-  \prop_gput:Nxx \g__lqt_data_sources_prop
-  { \tl_use:N \l__lqt_tmp_data_key_tl }
-  { \tl_use:N \l__lqt_inline_data_file_tl }
-}
-
-% -------------------------------------------------------------------------
-%                            USER INTERFACE
-% -------------------------------------------------------------------------
-
-\NewDocumentCommand{\liquiddatasource}{ m m }{%
-  \prop_gput:Nnn \g__lqt_data_sources_prop { #1 } { #2 } %
-}
-
-
-\NewDocumentCommand{\inputliquid}{ O{} m }{%
-  \tl_set:Nn \l__lqt_tmp_template_tl { #2 }
-
-  \__lqt_resolve_data_source:nN { #1 } \l__lqt_tmp_data_tl
-
-  \__lqt_input_liquid:nn
-  { \tl_use:N \l__lqt_tmp_template_tl }
-  { \tl_use:N \l__lqt_tmp_data_tl }
-}
-
-\NewDocumentEnvironment{liquid}{ O{} +b }{%
-  \__lqt_inline_input:nn { #1 } { #2 } %
-
-  \__lqt_input_liquid:nn %
-  { \tl_use:N \l__lqt_inline_template_tl } %
-  { \tl_use:N \l__lqt_tmp_data_tl } %
-}{} %
-
-\NewDocumentCommand{\liquidinline}{ O{} m }{%
-  \__lqt_inline_input:nn { #1 } { #2 } %
-
-  \__lqt_input_liquid:nn %
-  { \tl_use:N \l__lqt_inline_template_tl } %
-  { \tl_use:N \l__lqt_tmp_data_tl } %
-}
-
-\NewDocumentEnvironment{liquiddata}{ m }{%
-  \__lqt_inline_data_begin:n {#1} %
-}{ %
-  \__lqt_inline_data_end:
-}
-
-\RequirePackage{luapackageloader}
-
-\tl_new:N \l__my_pkg_path_tl
-\tl_set:Nx \l__my_pkg_path_tl {%
-  \file_get_full_name:n { liquidtex.sty } }
-\tl_new:N \l__tmp_tmp_tl
-\tl_new:N \l__dir_tl
-
-\file_parse_full_name:VNNN \l__my_pkg_path_tl \l__dir_tl \l__tmp_tmp_tl \l__tmp_tmp_tl
-
-\typeout{\l__my_pkg_path_tl}
-\typeout{\l__tmp_tmp_tl}
-\typeout{\l__dir_tl}
-
-\tl_new:N \g_liquidtex_dir_tl
-
-\directlua{
-  -- Ask kpathsea where liquidtex.sty really is
-  local f = kpse.find_file("liquidtex.sty", "tex")
-  if f then
-    -- Extract directory part
-    local dir = f:match("^(.*)[/\\].-$") or ""
-    local base = dir .. "/"
-    package.path = base .. "?.lua;" .. base .. "?/init.lua;" .. package.path
-    -- Escape a few TeX specials just in case
-    local function tex_escape(s)
-      return (s:gsub("([%%#{}])", "\\%1"))
-    end
-    tex.sprint(
-      "\\tl_gset:Nn \\g_liquidtex_dir_tl {" .. tex_escape(dir) .. "/}"
-    )
-  else
-    tex.sprint(
-      "\\tl_gset:Nn \\g_liquidtex_dir_tl {}"
-    )
-  end
-}
-
-\NewDocumentCommand{\lpath}{}{\tl_use:N \l__dir_tl}
-
-\NewDocumentCommand{\ltest}{}{%
-  \directlua{%
-    h = require("scripts/hello");
-
-    h.hello();
-  }%
-}
-
-%    \end{macrocode}
-%    \begin{macrocode}
-\AtBeginDocument{ %
-  \tl_if_eq:VnTF \__lqt_engine_tl { lua }
-    {
-      \bool_if:NF \__lqt_no_cache_bool
-        { \__lqt_ensure_cache_dir: }
-    }
-    { \__lqt_ensure_cache_dir: }
-}
+\cs_new_protected:Npn \__lqt_inline_filename:n #1
+  {
+    \int_gincr:N \g__lqt_inline_int
+    \tl_set:Nx \l__lqt_inline_tl
+      {\c_sys_jobname_str .lqt-inline-\int_use:N \g__lqt_inline_int .#1}
+  }
+\cs_new_protected:Npn \__lqt_inline:nn #1#2
+  {
+    \__lqt_inline_filename:n {liquid}
+    \iow_open:NV \l__lqt_inline_iow \l__lqt_inline_tl
+    \iow_now:Nx \l__lqt_inline_iow {\tl_to_str:n {#2}}
+    \iow_close:N \l__lqt_inline_iow
+    \tl_set:Nn \l__lqt_action_tl {render}
+    \__lqt_render:nn {\l__lqt_inline_tl}{#1}
+  }
+\NewDocumentCommand{\liquidsetup}{m}{\keys_set:nn {liquidtex}{#1}}
+\NewDocumentCommand{\liquiddatasource}{m m}{\__lqt_alias_set:nn {#1}{#2}}
+\NewDocumentCommand{\inputliquid}{s O{} m}
+  {
+    \group_begin:
+    \IfBooleanTF{#1}{\bool_set_true:N \__lqt_star_bool}{\bool_set_false:N \__lqt_star_bool}
+    \tl_set:Nn \l__lqt_action_tl {render}
+    \__lqt_render:nn {#3}{#2}
+    \group_end:
+  }
+\NewDocumentCommand{\liquidinline}{O{} m}
+  {\group_begin: \__lqt_inline:nn {#1}{#2} \group_end:}
+\cs_new_protected:Npn \__lqt_liquid_begin:w [#1]
+  {
+    \tl_set:Nn \l__lqt_alias_tl {#1}
+    \__lqt_inline_filename:n {liquid}
+    \VerbatimEnvironment
+    \begin{VerbatimOut}{\l__lqt_inline_tl}
+  }
+\NewDocumentEnvironment{liquid}{}
+  {\char_set_catcode_active:n {13} \peek_meaning:NTF [ {\__lqt_liquid_begin:w}{\__lqt_liquid_begin:w []}}
+  {
+    \end{VerbatimOut}
+    \tl_set:Nn \l__lqt_action_tl {render}
+    \__lqt_render:nn {\l__lqt_inline_tl}{\l__lqt_alias_tl}
+  }
+\cs_new_protected:Npn \__lqt_data_begin:n #1
+  {
+    \tl_set:Nn \l__lqt_alias_tl {#1}
+    \__lqt_inline_filename:n {yml}
+    \VerbatimEnvironment
+    \begin{VerbatimOut}{\l__lqt_inline_tl}
+  }
+\NewDocumentEnvironment{liquiddata}{}
+  {\char_set_catcode_active:n {13} \peek_meaning:NTF \c_group_begin_token {\__lqt_data_begin:n}{\__lqt_data_begin:n {default}}}
+  {
+    \end{VerbatimOut}
+    \prop_gput:NVx \g__lqt_data_sources_prop \l__lqt_alias_tl
+      {\file_full_name:V \l__lqt_inline_tl}
+  }
+\NewDocumentCommand{\liquidvalidate}{m}
+  {
+    \group_begin:
+    \tl_set:Nn \l__lqt_action_tl {validate}
+    \__lqt_render:nn {#1}{}
+    \group_end:
+  }
+\NewDocumentCommand{\liquidlist}{O{} m m}
+  {
+    \group_begin:
+    \tl_set:Nn \l__lqt_action_tl {list}
+    \tl_set:Nn \l__lqt_array_key_tl {#1}
+    \__lqt_render:nn {#3}{#2}
+    \group_end:
+  }
+\NewDocumentCommand{\sectionliquid}{o m}
+  {
+    \group_begin:
+    \tl_set:Nn \l__lqt_action_tl {section}
+    \IfNoValueF{#1}{\tl_set:Nx \l__lqt_section_toc_tl {\tl_to_str:n {#1}}}
+    \__lqt_render:nn {#2}{}
+    \group_end:
+  }
+\NewDocumentCommand{\liquidfilter}{m m}
+  {
+    \str_if_eq:VnF \__lqt_engine_tl {lua}{\msg_fatal:nn {liquidtex}{native-filter-only}}
+    \__lqt_native_init:
+    \directlua{liquidtex_runtime.engine.register_filter("\luaescapestring{#1}",
+      assert(load("return~".."\luaescapestring{\unexpanded{#2}}"))())}
+  }
+\NewDocumentCommand{\liquidstats}{}
+  {\iow_term:x {liquidtex~statistics:~renders=\int_use:N \g__lqt_render_int,
+    ~cache-hits=\int_use:N \g__lqt_hit_int,~cpu-seconds=\fp_use:N \g__lqt_duration_fp}}
+\NewDocumentCommand{\liquidtexprevious}{m m}
+  {\prop_gput:Nnn \g__lqt_previous_prop {#1}{#2}}
+\NewDocumentCommand{\liquidtexresult}{m m m m}
+  {
+    \bool_set_true:N \__lqt_success_bool
+    \bool_if:NT \__lqt_diagnostics_bool
+      {
+        \int_gincr:N \g__lqt_render_int
+        \int_gadd:Nn \g__lqt_hit_int {#1}
+        \fp_gadd:Nn \g__lqt_duration_fp {#2}
+      }
+    \__lqt_log:nn {basic}{render~#3,~cache-hit=#1}
+    \prop_get:NnNTF \g__lqt_previous_prop {#3} \l_tmpa_tl
+      {\str_if_eq:VnF \l_tmpa_tl {#4}{\bool_gset_true:N \__lqt_changed_bool}}
+      {\bool_gset_true:N \__lqt_changed_bool}
+    \legacy_if:nT {@filesw}
+      {\iow_now:cx {@auxout}{\token_to_str:N \liquidtexprevious{#3}{#4}}}
+  }
+\NewDocumentCommand{\liquidtexvalidated}{}
+  {\bool_set_true:N \__lqt_success_bool \__lqt_log:nn {basic}{validation~passed}}
+\NewDocumentCommand{\liquidtexfailure}{}
+  {
+    \bool_set_false:N \__lqt_success_bool
+    \__lqt_log_file:n {\l__lqt_log_tl}
+    \msg_error:nnx {liquidtex}{runtime-failed}{\l__lqt_template_tl}
+  }
+\AtEndDocument
+  {
+    \bool_if:NT \__lqt_changed_bool {\msg_warning:nn {liquidtex}{rerun}}
+    \bool_if:NT \__lqt_diagnostics_bool {\liquidstats}
+  }
 \ExplSyntaxOff
 %</package>
 %    \end{macrocode}

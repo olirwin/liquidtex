@@ -1,0 +1,9 @@
+title: "minimal test"
+user:
+  name: "alice"
+  active: true
+items:
+  - "first"
+  - "second"
+  - "third"
+published_at: "2025-01-05 14:30:00"

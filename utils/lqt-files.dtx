@@ -22,313 +22,117 @@
 %%
 %</postamble>
 %<*package>
-\def\lqtfilesversion{0.2.0}
-\def\lqtfilesdate{2025-11-21}
-\NeedsTeXFormat{LaTeX2e}[2020-01-01]
-\ProvidesExplPackage
-  {lqt-files}
-  {\lqtfilesdate}
-  {\lqtfilesversion}
-  {File handling for the `liquidtex` package}
-
-\RequirePackage{expl3}
-\RequirePackage{lqt-messages}
+\ProvidesExplPackage{lqt-files}{2026-11-05}{0.3.0}{Liquid request files}
 \ExplSyntaxOn
-\bool_new:N \__lqt_cache_ready_bool
-%      Low-level helper: attempt to create directory #1 using the OS shell.
-\cs_new_protected:Npn \__lqt_mkdir:n #1
-{
-  \sys_if_shell_unrestricted:TF
+\cs_new_protected:Npn \__lqt_resolve_template:n #1
   {
-    \sys_if_platform_windows:TF
-    {
-      % Windows: mkdir creates parents and succeeds if the directory exists.
-      \sys_shell_now:e { mkdir~ #1 }
-    }
-    {
-      % POSIX-like: use mkdir -p to create parents and ignore existing dir.
-      \sys_shell_now:e { mkdir~ -p~ #1 }
-    }
-  }
-  {
-    \msg_error:nnx { liquidtex } { cant-create-cache } { #1 }
-  }
-}
-%
-%      Low-level helper: attempt to create file #1 using the OS shell.
-\cs_new_protected:Npn \__lqt_touch:n #1
-{
-  \sys_if_shell_unrestricted:TF
-  {
-    \sys_if_platform_windows:TF
-    {
-      % Windows: mkdir creates parents and succeeds if the directory exists.
-      \sys_shell_now:e { touch~ #1 }
-    }
-    {
-      % POSIX-like: use mkdir -p to create parents and ignore existing dir.
-      \sys_shell_now:e { touch~ #1 }
-    }
-  }
-  {
-    \msg_error:nnx { liquidtex } { cant-create-file } { #1 }
-  }
-}
-\cs_generate_variant:Nn \__lqt_touch:n { x }
-%
-
-%      Low-level helper: attempt to move file #1 to #2 using the OS shell.
-\cs_new_protected:Npn \__lqt_mv:nn #1#2
-{
-  \sys_if_shell_unrestricted:TF
-  {
-    \sys_if_platform_windows:TF
-    {
-      % Windows: mkdir creates parents and succeeds if the directory exists.
-      \sys_shell_now:e { mv~ #1~ #2 }
-    }
-    {
-      % POSIX-like: use mkdir -p to create parents and ignore existing dir.
-      \sys_shell_now:e { mv~ #1~ #2 }
-    }
-  }
-  {
-    \msg_error:nnx { liquidtex } { cant-create-file } { #2 }
-  }
-}
-\cs_generate_variant:Nn \__lqt_mv:nn { xx }
-%
-
-% Remove file #1
-\cs_new_protected:Npn \__lqt_remove_file:n #1
-{
-  \file_if_exist:nTF {#1}
-  {
-    \bool_if:NT \__lqt_verbose_bool
-    {
-      \msg_info:nnx
-      { liquidtex } { remove-file }
-      { #1 }
-    }
-        % Platform-specific delete
-        \sys_if_platform_windows:TF
+    \tl_set:Nx \l__lqt_template_tl {#1}
+    \file_if_exist:VF \l__lqt_template_tl
+      {
+        \tl_set_eq:NN \l_tmpa_tl \l__lqt_template_tl
+        \clist_map_inline:Nn \__lqt_template_paths_clist
           {
-            % Windows: use cmd /c "del /F /Q file"
-            \sys_shell_now:n
-              { cmd~ /c~ "del~ /F~ /S~ /Q~ #1" }
-          }
-          {
-            % Unix-like: rm -rf file
-            \sys_shell_now:n
-              { rm~ -rf~ #1 }
+            \file_if_exist:nT {##1/\l_tmpa_tl}
+              {\tl_set:Nx \l__lqt_template_tl {##1/\l_tmpa_tl} \clist_map_break:}
           }
       }
-      { } % do nothing if file does not exist
+    \file_if_exist:VTF \l__lqt_template_tl
+      {\tl_set:Nx \l__lqt_template_tl {\file_full_name:V \l__lqt_template_tl}}
+      {\msg_fatal:nnx {liquidtex}{missing-template}{\l__lqt_template_tl}}
   }
-\cs_generate_variant:Nn \__lqt_remove_file:n { x }
-
-% Initialise the effective cache directory and ensure it exists.
-% For now we ignore auxdir and simply use the outdir value.
-\cs_new_protected:Nn \__lqt_init_cache_dir:
-{
-  % effective cache dir := outdir (auxdir integration may be added later)
-  \tl_set_eq:NN \__lqt_cache_dir_tl \__lqt_outdir_tl
-
-  \bool_if:NT \__lqt_verbose_bool
-    {
-      \msg_info:nnx
-      { liquidtex } { tmp-cache-dir }
-      { \tl_use:N \__lqt_cache_dir_tl }
-    }
-
-  \bool_if:NT \__lqt_verbose_bool
-    {
-      \msg_info:nnx
-      { liquidtex } { cache-dir }
-      { \tl_use:N \__lqt_cache_dir_tl }
-    }
-  
-  \__lqt_mkdir:n { \tl_use:N \__lqt_cache_dir_tl }
-}
-
-\cs_new_protected:Nn \__lqt_ensure_cache_dir:
-{
-  \bool_if:NF \__lqt_cache_ready_bool
-    {
-      \__lqt_init_cache_dir:
-      \bool_set_true:N \__lqt_cache_ready_bool
-    }
-}
-
-% #1 = tl var to store the base name
-% #2 = filename (possibly with path and extension)
-\cs_new_protected:Npn \__lqt_get_file_base_name:nn #1#2
+\cs_generate_variant:Nn \tl_replace_all:Nnn {Nee}
+\cs_new_protected:Npn \__lqt_json:n #1
   {
-    \file_parse_full_name:nNNN { #2 }
-      \l__lqt_tmp_dir_tl
-      #1
-      \l__lqt_tmp_ext_tl
-}
-\cs_generate_variant:Nn \__lqt_get_file_base_name:nn { nx }
-
-% Check if cached file is fresh
-\prg_new_conditional:Npnn \__lqt_cache_is_fresh:nn #1#2 { T, F, TF }
-{
-  % If `no-cache`, return false whatever
-  \bool_if:NT \__lqt_no_cache_bool
-  { \prg_return_false: }
-    % #1 = template path, #2 = data path (may be empty)
-
-    % Compute cache filename for this (template, data) pair.
-    \__lqt_compute_output_files:nn { #1 }{ #2 }
-
-    % Cache file must exist, otherwise: not fresh.
-    \file_if_exist:VTF \l__lqt_output_file_tl
+    \tl_set:Nx \l__lqt_json_tl {\tl_to_str:e {#1}}
+    \tl_replace_all:Nee \l__lqt_json_tl {\c_backslash_str}{\c_backslash_str\c_backslash_str}
+    \tl_replace_all:Nee \l__lqt_json_tl {"}{\c_backslash_str"}
+    \tl_replace_all:Nee \l__lqt_json_tl {\char_generate:nn {10}{12}}{\c_backslash_str n}
+    \tl_replace_all:Nee \l__lqt_json_tl {\char_generate:nn {13}{12}}{\c_backslash_str r}
+    \tl_replace_all:Nee \l__lqt_json_tl {\char_generate:nn {9}{12}}{\c_backslash_str t}
+  }
+\cs_new_protected:Npn \__lqt_field:nn #1#2
+  {
+    \__lqt_json:n {#2}
+    \iow_now:Nx \l__lqt_request_iow {"#1":"\exp_not:V \l__lqt_json_tl",}
+  }
+\cs_new_protected:Npn \__lqt_array:N #1
+  {
+    \tl_clear:N \l__lqt_collection_tl
+    \clist_map_inline:Nn #1
       {
-        % Template must exist; if it doesn't, play safe: not fresh.
-        \file_if_exist:nF { #1 }
-          { \prg_return_false: }
-
-        % Compare cache vs template:
-        %   \filemodcmp[3]{cache}{template}{cache newer}{template newer}{equal}
-        % We want: fresh if cache >= template, stale if template > cache.
-        \filemodcmp[3]
-          { \tl_use:N \l__lqt_output_file_tl } { #1 }
-          {
-            % cache newer than template
-            \tl_if_blank:nTF { #2 }
-              {
-                % no data file → template check is enough
-                \prg_return_true:
-              }
-              {
-                % data file must exist
-                \file_if_exist:nF { #2 }
-                  { \prg_return_false: }
-
-                % cache vs data: fresh if cache >= data, stale if data > cache
-                \filemodcmp[3]
-                  { \tl_use:N \l__lqt_output_file_tl } { #2 }
-                  { \prg_return_true: }   % cache newer
-                  { \prg_return_false: }  % data newer
-                  { \prg_return_true: }   % equal
-              }
-          }
-          {
-            % template newer than cache → stale
-            \prg_return_false:
-          }
-          {
-            % cache and template have equal timestamp → treat as fresh wrt template
-            \tl_if_blank:nTF { #2 }
-              {
-                \prg_return_true:
-              }
-              {
-                % same data check as above
-                \file_if_exist:nF { #2 }
-                  { \prg_return_false: }
-
-                \filemodcmp[3]
-                  { \tl_use:N \l__lqt_output_file_tl } { #2 }
-                  { \prg_return_true: }   % cache newer
-                  { \prg_return_false: }  % data newer
-                  { \prg_return_true: }   % equal
-              }
-          }
-      }
-      {
-        % No cache file → not fresh.
-        \prg_return_false:
+        \tl_if_empty:NF \l__lqt_collection_tl {\tl_put_right:Nn \l__lqt_collection_tl {,}}
+        \__lqt_json:n {##1}
+        \tl_put_right:Nx \l__lqt_collection_tl {"\exp_not:V \l__lqt_json_tl"}
       }
   }
-
-% Compute output (cache + log) file names
-\cs_new_protected:Npn \__lqt_compute_output_files:nn #1#2
+\cs_new_protected:Npn \__lqt_write_request:
   {
-    % #1 = template path, #2 = data path (may be empty)
-
-    % Base name of the template:
-    \__lqt_get_file_base_name:nn \l__lqt_tmpl_base_tl { #1 }
-
-    % Start building <cache>/<template>
-    \tl_set:Nn \l__lqt_output_file_tl
+    \tl_set:Nx \l__lqt_request_tl {\c_sys_jobname_str .lqt-request.json}
+    \iow_open:NV \l__lqt_request_iow \l__lqt_request_tl
+    \iow_now:Nx \l__lqt_request_iow {\c_left_brace_str}
+    \__lqt_field:nn {document}{\c_sys_jobname_str}
+    \__lqt_field:nn {template_path}{\l__lqt_template_tl}
+    \__lqt_field:nn {data_path}{\l__lqt_data_tl}
+    \__lqt_field:nn {action}{\l__lqt_action_tl}
+    \__lqt_field:nn {array_key}{\l__lqt_array_key_tl}
+    \__lqt_field:nn {section_toc}{\l__lqt_section_toc_tl}
+    \__lqt_field:nn {outdir}{\__lqt_outdir_tl}
+    \__lqt_field:nn {debug_dir}{\__lqt_debug_dir_tl}
+    \iow_now:Nx \l__lqt_request_iow
+      {"no_cache":\bool_if:NTF \__lqt_no_cache_bool {true}{false},
+       "use_auxdir":\bool_if:NTF \__lqt_use_auxdir_bool {true}{false},}
+    \__lqt_array:N \__lqt_data_files_clist
+    \iow_now:Nx \l__lqt_request_iow {"data_files":[\exp_not:V \l__lqt_collection_tl],}
+    \tl_clear:N \l__lqt_collection_tl
+    \prop_map_inline:Nn \g__lqt_namespaces_prop
       {
-        \tl_use:N \__lqt_cache_dir_tl
-        / \tl_use:N \l__lqt_tmpl_base_tl
+        \tl_if_empty:NF \l__lqt_collection_tl {\tl_put_right:Nn \l__lqt_collection_tl {,}}
+        \__lqt_json:n {##1}
+        \tl_put_right:Nx \l__lqt_collection_tl {"\exp_not:V \l__lqt_json_tl":}
+        \__lqt_json:n {##2}
+        \tl_put_right:Nx \l__lqt_collection_tl {"\exp_not:V \l__lqt_json_tl"}
       }
-
-    % If we have a data file, append +<data-base>
-    \tl_if_blank:nF { #2 }
+    \iow_now:Nx \l__lqt_request_iow
+      {"namespaces":\c_left_brace_str\exp_not:V \l__lqt_collection_tl\c_right_brace_str,}
+    \str_if_eq:VnT \__lqt_engine_tl {external}
       {
-        \__lqt_get_file_base_name:nn \l__lqt_data_base_tl { #2 }
-        \tl_put_right:Nn \l__lqt_output_file_tl
-          { + \tl_use:N \l__lqt_data_base_tl }
-        }
-
-    % Copy to log name
-    \tl_set:Nx \l__lqt_engine_log_file_tl {\tl_use:N \l__lqt_output_file_tl}
-    %\tl_show:N \l__lqt_engine_logfile_tl
-
-    % Finally add the extensions
-    \tl_put_right:Nn \l__lqt_output_file_tl { .tex }
-    \tl_put_right:Nn \l__lqt_engine_log_file_tl { .log }
+        \iow_now:Nx \l__lqt_request_iow {"external":\c_left_brace_str}
+        \__lqt_field:nn {path}{\__lqt_engine_path_tl}
+        \__lqt_field:nn {arg_style}{\__lqt_arg_style_tl}
+        \__lqt_array:N \__lqt_arguments_clist
+        \iow_now:Nx \l__lqt_request_iow
+          {"arguments":[\exp_not:V \l__lqt_collection_tl],
+           "template_index":\int_use:N \__lqt_template_index_int,
+           "data_index":\int_use:N \__lqt_data_index_int,
+           "output_index":\int_use:N \__lqt_output_index_int\c_right_brace_str,}
+      }
+    \iow_now:Nx \l__lqt_request_iow {"version":1\c_right_brace_str}
+    \iow_close:N \l__lqt_request_iow
+    \tl_set:Nx \l__lqt_request_tl {\file_full_name:V \l__lqt_request_tl}
+    \tl_set_eq:NN \l__lqt_result_tl \l__lqt_request_tl
+    \regex_replace_once:nnN {\.json\Z}{.result.tex} \l__lqt_result_tl
+    \tl_set_eq:NN \l__lqt_output_tl \l__lqt_request_tl
+    \regex_replace_once:nnN {\.json\Z}{.output.tex} \l__lqt_output_tl
+    \tl_set_eq:NN \l__lqt_log_tl \l__lqt_request_tl
+    \regex_replace_once:nnN {\.json\Z}{.log} \l__lqt_log_tl
+    \iow_open:NV \l__lqt_request_iow \l__lqt_result_tl
+    \iow_now:Nn \l__lqt_request_iow {\liquidtexfailure{}}
+    \iow_close:N \l__lqt_request_iow
   }
-
-\cs_new_protected:Npn \__lqt_compute_inline_template_filename: { %
-  % Compute template filename: <cache>/inline-<n>.liquid
-  \tl_set:Nx \l__lqt_inline_template_tl
+\cs_new_protected:Npn \__lqt_record_file:n #1
   {
-    \tl_use:N \__lqt_cache_dir_tl /
-    inline-\int_use:N \c__lqt_inlines_cnt_int .liquid
+    \ior_open:Nn \l__lqt_ior {#1}
+    \ior_close:N \l__lqt_ior
   }
-}
-
-\cs_new_protected:Npn \__lqt_compute_inline_data_filename: { %
-  % Compute template filename: <cache>/data-<n>.yml
-  \tl_set:Nx \l__lqt_inline_data_file_tl
+\cs_new_protected:Npn \__lqt_log_file:n #1
   {
-    \tl_use:N \__lqt_cache_dir_tl /
-    data-\int_use:N \c__lqt_inline_data_cnt_int .yml
+    \file_if_exist:nT {#1}
+      {
+        \ior_open:Nn \l__lqt_ior {#1}
+        \ior_str_map_inline:Nn \l__lqt_ior {\iow_term:n {liquidtex:~##1}}
+        \ior_close:N \l__lqt_ior
+      }
   }
-}
-
-\cs_new_protected:Npn \__lqt_write_to_cache_file:Vn #1#2 { %
-  \__lqt_get_file_base_name:nn \l__lqt_tmp_filename_tl { #1 } %
-  \tl_put_right:Nn \l__lqt_tmp_filename_tl { .tmp }
-  \bool_if:NT \__lqt_verbose_bool { %
-    \msg_info:nnxx {liquidtex} {tmp-debug-inline} %
-    {\tl_use:N #1} %
-    {\tl_use:N \l__lqt_tmp_filename_tl} %
-  }
-
-  \__lqt_touch:x {\tl_use:N \l__lqt_tmp_filename_tl} %
-  \iow_open:Nn \l__lqt_cache_iow { \tl_use:N \l__lqt_tmp_filename_tl } %
-  \iow_now:Nn \l__lqt_cache_iow { #2 } %
-  \iow_close:N \l__lqt_cache_iow %
-
-  \__lqt_mv:xx {\tl_use:N \l__lqt_tmp_filename_tl} { #1 } %
-}
-
-
-% \cs_new_protected:Npn \__lqt_write_to_file:n #1
-% {
-%     \__lqt_get_file_base_name:nn \l__lqt_inline_tmp_tl {\tl_use:N
-%       \l__lqt_inline_template_tl}
-%     \tl_put_right:Nn \l__lqt_inline_tmp_tl { .liquid }
-%     \msg_info:nnxx {liquidtex} {tmp-debug-inline}
-%     {\tl_use:N \l__lqt_inline_template_tl}
-%     {\tl_use:N \l__lqt_inline_tmp_tl}
-%     \__lqt_touch:x {\tl_use:N \l__lqt_inline_tmp_tl}
-%     % Open the file and write the body
-%     \iow_open:Nn \l__lqt_inline_iow { \tl_use:N \l__lqt_inline_tmp_tl
-%     }
-%     \iow_now:Nn  \l__lqt_inline_iow { #1 }
-%     \iow_close:N \l__lqt_inline_iow
-
-%     \__lqt_mv:xx {\tl_use:N \l__lqt_inline_tmp_tl} {\tl_use:N
-%       \l__lqt_inline_template_tl}
-% }
 \ExplSyntaxOff
 %</package>
 %\Finale

@@ -1,11 +1,30 @@
 \section{Examples and Use Cases}
 \label{app:examples}
 
-\begin{blocktip}
-  This section should fill up soon \emoji{wink}
-\end{blocktip}
+The repository includes compilable examples and their inputs:
+\begin{itemize}
+\item \texttt{test-lua.tex}: native LuaLaTeX rendering with a YAML data file,
+  conditionals, loops, filters, and dates. Compile with
+  \texttt{lualatex -no-shell-escape test-lua.tex} after extraction.
+\item \texttt{test.tex}: the bundled external renderer, data aliases, file-based
+  templates, verbatim inline templates, and inline YAML sources. Compile with
+  \texttt{lualatex -shell-escape test.tex}.
+\item \texttt{examples/pipeline.json}: two CV variants rendered from separate
+  data sources using a shared template. Run
+  \texttt{texlua scripts/liquidtex.lua pipeline examples/pipeline.json}.
+\end{itemize}
 
-%%% Local Variables:
-%%% mode: LaTeX
-%%% TeX-master: "../liquidtex"
-%%% End:
+\begin{bodycode}
+\begin{liquiddata}{person}
+name: Oliver
+title: Researcher
+\end{liquiddata}
+\begin{liquid}[person]
+\textbf{ {{ name }} } --- {{ title }}
+\end{liquid}
+\end{bodycode}
+
+For a list, use a data file with an array (or select an array path) and a row
+such as \verb|\item {{ item.name }}|. Wrap \verb|\liquidlist| in the desired LaTeX
+environment. Data-driven tables use the same mechanism with rows producing
+ampersands and line-break commands.

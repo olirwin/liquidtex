@@ -375,11 +375,18 @@ TSWLatexianTemp*
 
 .liquid-cache/
 create-*.sh
-*.yml
 *.zip
-templates
 
 releases
 *.atfi
-scripts/
 tmp/
+
+# Build and integration-test output
+/build/
+*.lqt-*
+__pycache__/
+
+/liquidtex-cache/
+
+# Generated documentation concept index
+docs/liquidtex.pdx

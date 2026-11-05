@@ -1,188 +1,63 @@
-# `liquidtex` — Project Roadmap
+# liquidtex roadmap
 
-This roadmap outlines the planned evolution of the `liquidtex` package.
-It follows a phased approach: starting with foundational stability, then focusing on developer ergonomics, richer template support, Lua integration, deeper LaTeX interaction, and finally fully-fledged document-generation features.
+Updated 2026-11-05 for the `fix/reproducible-rendering` branch. Implemented items
+are pending review/merge; see [PROJECT_STATUS.md](PROJECT_STATUS.md) for evidence
+and GitHub links. The original phase ordering is retained below.
 
-Each phase can be implemented incrementally and safely.
+## Phase 0 — Foundation
 
----
+- [x] DocStrip sources, public configuration, helper modules.
+- [x] Restore loading under LuaLaTeX and pdfLaTeX.
+- [x] Track runtime libraries and fixtures; build the actual user manual.
+- [x] Complete TeX-tree installation and archive contents; consistent 0.3.0 metadata.
+- [x] Automated behavioral tests and GitHub Actions.
 
-# 🟦 Phase 0 — Foundation (current)
+## Phase 1 — Developer experience
 
-**Goal:** establish a stable backbone for template rendering.
+- [x] Shared external command builder with positional indices and named flags.
+- [x] POSIX quoting, explicit Windows shell-character restrictions.
+- [x] Verbosity levels, exact commands, exit status, and errors in the TeX log.
+- [x] Starred rendering to the log and optional debug snapshots.
+- [ ] Windows end-to-end testing and broader Windows shell-character support.
 
-- [x] `.dtx` structure, installation machinery, and documentation setup
-- [x] key–value interface (`l3keys2e`)
-- [x] package options: `verbose`, `outdir`, `no-cache`, `data`
-- [x] engine selection: `external` (functional), `lua` (placeholder)
-- [x] engine configuration subkeys (`engine-conf`)
-- [x] cache directory creation
-- [x] external rendering with shell escape
-- [x] cache freshness detection using `filemod`
-- [x] public command `\inputliquid` with data override
-- [x] strict internal API naming (`__lqt_…`)
+## Phase 2 — Templates and data
 
-**Status:** ✔ Completed / ongoing cleanup.
+- [x] Verbatim inline templates and inline expressions.
+- [x] Verbatim inline YAML with named/default sources.
+- [x] Additive aliases, namespaced `data.*`, ordered YAML/JSON root merging.
+- [x] Configurable template search paths.
+- [x] Content-based caching, distinct path identities, and functional no-cache.
+- [ ] Richer inline data formats and stdin sources if demanded by use cases.
 
----
+## Phase 3 — Native Lua backend
 
-# 🟩 Phase 1 — Developer Quality of Life
+- [x] Native LuaLaTeX rendering without shell escape.
+- [x] Single-file and merged YAML/JSON data, cached parsed templates.
+- [x] Error paths/lines and Lua traceback reporting.
+- [x] Whitespace control, conditionals, loops, common filters, and date formatting.
+- [ ] Broader Liquid compatibility beyond the documented subset.
 
-**Goal:** make debugging, tracing, and engine interactions clear and robust.
+## Phase 4 — LaTeX integration
 
-### Core features
+- [x] Templated sections with first-line title, body, and optional TOC title.
+- [x] Array row rendering for lists/tables with explicit structure validation.
+- [x] Auxiliary output digests and rerun warnings.
+- [x] Recorder dependencies and latexmk handling for data-only input changes.
+- [ ] Dedicated template modules and more specialized document helpers.
 
-- [-] Clean command-line builder
+## Phase 5 — Toolkit
 
-  - [ ] positional argument indices
-  - [ ] named argument style
-  - [-] correct quoting for spaces
-  - [-] cross-platform compatibility
-- [o] Unified logging functions (`\__lqt_log:n`)
-- [-] Verbose modes:
+- [x] Pure custom native Lua filters.
+- [x] Template validation without inserting output.
+- [x] Opt-in request/cache-hit/CPU statistics and debug artifacts.
+- [ ] Includes/partials and inheritance, with dependency tracking.
+- [ ] Advanced profiling/dependency graphs.
+- [ ] TikZ and bibliography integrations when requirements are established.
 
-  - [ ] `verbose=basic`
-  - [ ] `verbose=full`
-  - [ ] `trace-engine`
-- [x] Forward external engine errors into LaTeX-friendly messages
-- [o] Starred form of `\inputliquid` that prints the rendered file verbatim
-- [-] Capturing stderr/stdout when possible
+## Phase 6 — Workflow
 
-### Stretch goals
-
-- [ ] “Last command” dump into `.log`
-- [ ] Debug directory with intermediate outputs
-
----
-
-# 🟧 Phase 2 — Richer Template Input
-
-**Goal:** make Liquid feel like a first-class citizen in LaTeX.
-
-### Core features
-
-- [ ] Inline template blocks:
-
-  ```latex
-  \begin{liquid}
-    {{ name }}
-  \end{liquid}
-  ```
-- [ ] Inline template expressions:
-
-  ```latex
-  \liquidinline{ {{ user.key }} }
-  ```
-- [ ] Inline YAML/JSON data blocks:
-
-  ```latex
-  \begin{liquiddata}
-  name: Oliver
-  \end{liquiddata}
-  ```
-- [ ] Namespaced data sources via `data.* = …` subkeys
-- [ ] Combined data merging (global + local overrides)
-- [ ] Template search paths (like `\graphicspath`)
-
-### Stretch goals
-
-- [ ] Literal template rendering (`literal={…}`) without files
-- [ ] Allow `\inputliquid` to read from stdin
-
----
-
-# 🟨 Phase 3 — Lua Engine Integration
-
-**Goal:** lightweight, portable, no shell escape required.
-
-### Core features
-
-- [ ] Implement `engine=lua` backend
-- [ ] Bind to a Lua Liquid interpreter (existing library or embedded subset)
-- [ ] Merge YAML/JSON data natively in Lua
-- [ ] Cache parsed templates in Lua state
-- [ ] Provide Lua-level error messages with tracebacks
-
-### Stretch goals
-
-- [ ] Allow rendering directly from Lua variables generated within the document
-- [ ] Keep long-lived Lua VM between renders
-
----
-
-# 🟫 Phase 4 — Advanced LaTeX Integration
-
-**Goal:** dynamic content becomes natural in documents.
-
-### Core features
-
-- [ ] Templated document sections:
-
-  ```latex
-  \sectionliquid{title.liq}
-  ```
-- [ ] Templated lists / tables:
-
-  ```latex
-  \liquidlist{pubs.yml}{pub-row.liq}
-  ```
-- [ ] Automatic multi-run detection
-
-  - [ ] write sentinel files
-  - [ ] cooperate with latexmk/arara
-- [ ] Automatic dependency tracking (template + data)
-- [ ] `filecontents`-style generated `.tex` files via templates
-
-### Stretch goals
-
-- [ ] Automatic rerun of Liquid layer within complex workflows
-- [ ] Dedicated `.lqt` template modules
-
----
-
-# 🟪 Phase 5 — Toolkit-Level Features
-
-**Goal:** make `liquidtex` a complete data-driven document system.
-
-### Core features
-
-- [ ] Custom Liquid filters defined in LaTeX:
-
-  ```latex
-  \liquidfilter{uppercase}{...}
-  ```
-- [ ] Template partials and inheritance
-- [ ] Robust validation tools:
-
-  ```latex
-  \liquidvalidate{template.liq}
-  ```
-- [ ] Diagnostics:
-
-  - [ ] number of cache hits
-  - [ ] performance measurements
-  - [ ] dependency graphs
-
-### Stretch goals
-
-- [ ] Templated TikZ diagrams
-- [ ] Templated bibliography entries (`biblatex` integration)
-
----
-
-# 🟦 Phase 6 — Fully Integrated Workflow System
-
-**Goal:** from package → framework.
-
-### Possible features
-
-- [ ] Automatic generation of CVs, syllabi, publication lists
-- [ ] Multi-template pipelines
-- [ ] Integrated dataset management
-- [ ] Optional CLI companion for testing templates outside of LaTeX
-- [ ] Unified “liquid project” configuration file
-- [ ] Export LaTeX+Liquid templates into standalone build artifacts
-- [ ] HTML output pipeline via Liquid → LaTeX → PDF → HTML → Markdown
-
----
-
+- [x] Optional render/validate/inspect CLI using the shared runtime.
+- [x] Declarative YAML/JSON multi-output pipelines with selective invalidation.
+- [x] Small CV pipeline example.
+- [ ] Larger CV/report teaching examples and dataset management.
+- [ ] Project configuration conventions and HTML/export workflows.

@@ -6,7 +6,7 @@ Options may be passed at package load time or via \refCom{liquidsetup} in
 the preamble or the document. %
 
 \begin{blockwarning}
-  Some keys are restricted to preamble usage only. %
+  See the runtime chapter for additions in version 0.3.0. Some keys are restricted to preamble usage only. %
   When this is the case, the description of the key is marked with a
   \preambleonly{} symbol. %
 \end{blockwarning}
@@ -26,18 +26,18 @@ These options are used for the general configuration of \pkg{liquidtex}. %
     \docValue{true}, initial: \docValue{false}}%
   \index{cache!deactivation}
   Disables the use of cache-rendered output.%
-  \changes{v0.1.0}{2025-11-19}{Currently mis-functional}
+  Forces every request to render, bypassing persistent cached output.
 \end{docKey}
 \begin{docKey}[][doc description=\preambleonly]{outdir}{=\meta{path}}{default: \meta{path}}
   \index{output directory!configuration}
    Directory used to store rendered templates and cache files. %
 \end{docKey}
 \begin{docKey}[][doc description=\preambleonly]{use-auxdir}{=\docValue{true}\textbar\docValue{false}}{default:
-    \docValue{true}, initial: \docValue{false}}%
+    \docValue{true}, initial: \docValue{true}}%
   Indicates whether \refKey{outdir} should be interpreted relative to the
   engine’s auxiliary directory (e.g.\ under \meta{--auxdir} or
   \meta{--output-directory}). %
-  \changes{v0.1.0}{2025-11-19}{Not yet implemented.}
+  This applies to relative cache and debug directories.
 \end{docKey}
 
 %\PrintChanges
@@ -45,14 +45,12 @@ These options are used for the general configuration of \pkg{liquidtex}. %
 \subsection{Template data}
 \label{ssec:template-data-options}
 
-\begin{docKey}[][doc description=\mandatory]{data}{=\meta{path}}{} %
+\begin{docKey}{data}{=\meta{path}}{} %
   Sets the default data source used when rendering templates. %
-  No default value is set, but this parameter should be set at some point
-  before rendering templates\footnote{otherwise, there is no real meaning to
-    the operation of \emph{rendering} a template of course}. %
+  No default value is set, static templates may be rendered with no selected data source. %
 \end{docKey}
 \begin{docKey}[][doc new=2025-11-21]{data-sources}{=\meta{options}}{} %
-  Sets different data sources to be used throughout the document. %
+  Adds or replaces individual data source aliases without clearing other sources. %
   The \meta{options} are passed as a key-value collection where the key is
   the alias of the data source and the key is the path to the file. %
 
@@ -63,7 +61,7 @@ These options are used for the general configuration of \pkg{liquidtex}. %
 \subsection{Engine selection}
 \label{ssec:engine-selection-options}
 
-\pkg{liquidtex} allows\footnote{or will allow at some point at least} to render
+\pkg{liquidtex} can render
 Liquid templates with different backends. %
 The rendering engine can be selected with: %
 

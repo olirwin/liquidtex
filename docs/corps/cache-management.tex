@@ -1,46 +1,26 @@
 \section{Caching}
 \label{sec:caching}
 
-A core feature of \pkg{liquidtex} is that it can leverage a \emph{cache} to
-speed up compilation by avoiding the re-rendering of templates. %
+The default cache directory is \texttt{liquidtex-cache}. Relative cache and debug
+paths are placed under the TeX auxiliary output directory when
+\texttt{use-auxdir=true}; otherwise they are relative to the compilation directory.
+LuaTeX can create the cache without shell escape. Use relative, visible output
+paths that satisfy TeX's output restrictions.
 
-\subsection{Cache directory management}
+A cache identity includes the document, complete input paths, selected data,
+namespace configuration, rendering action, and external-engine configuration.
+A signature checks the contents of templates and all data sources, the bundled
+renderer sources, and registered pure filters. Changing input contents invalidates
+the entry even when timestamps do not change. Matching basenames in different
+directories have separate entries.
 
-The cache directory stores all rendered output files. %
-This directory if computed from \refKey{outdir}. %
+\texttt{no-cache} forces each request to render and bypasses persistent cached
+output; it does not suppress auxiliary request/result files or inline captures.
+Only successful renders are published. A nonzero external exit status raises a
+LaTeX error even if the renderer wrote an output file.
 
-\begin{blockwarning}
-  The use of cache with \pkg{liquidtex} imposes the use of the
-  \verb+-shell-escape+ compilation flag. %
-\end{blockwarning}
-
-\begin{blocktip}
-  Throughout the compilation, the package may emit diagnostic messages
-  about cache usage when \refKey{verbose} is enabled. %
-\end{blocktip}
-
-\subsection{Cache for rendering}
-
-When compiling the document and rendering templates, \pkg{liquidtex} will
-create, for each pair (\meta{template}, \meta{data}), a cache file whose
-name is derived from the base names of the sources. %
-This mecanism allows for the same template to be cached rendered with
-different data sets and still avoid being rerendered. %
-
-A cache entry is considered \emph{fresh} when:
-
-\begin{enumerate}
-  \item it exists;
-  \item it is not older than the template file; and
-  \item if a data file is present, it is not older than that data file.
-\end{enumerate}
-
-Freshness is checked using the \pkg{filemod} package. %
-If the cache is fresh, the cached file is input directly; otherwise, the
-rendering engine is invoked and the result stored. %
-
-
-%%% Local Variables:
-%%% mode: LaTeX
-%%% TeX-master: "../liquidtex"
-%%% End:
+Input files are opened through TeX for recorder dependency tracking. Liquid output
+digests are recorded in the auxiliary file and request a rerun when they change.
+\texttt{latexmk} can therefore notice data-only changes and settle cross-references
+on the next run. External-state-dependent templates or filters should use
+\texttt{no-cache} because those dependencies cannot be inferred automatically.
