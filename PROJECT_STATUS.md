@@ -112,11 +112,11 @@ Environment: TeX Live 2026 / LuaHBTeX 1.24.0, LaTeX2e 2025-11-01,
 LaTeX3 2026-01-19, Python 3. Tests generate their own files under `/tmp`.
 
 - `make extract`: succeeds and generates all main/helper runtime packages.
-- `python3 tests/run.py`: **14 behavioral integration tests pass**. These include
+- `python3 tests/run.py`: **15 behavioral integration tests pass**. These include
   native/external/pdfLaTeX output, warm caches, same-timestamp content changes,
   no-cache, inline capture, aliases/merging, search order, collisions, quoted
   external arguments/failures, validation, filters, empty arrays, TOC, auxiliary
-  output directories, `latexmk` dependencies and CLI/pipeline invalidation.
+  output directories, `latexmk` dependencies and CLI/pipeline invalidation. Both complete repository examples are also covered.
 - `make doc`: succeeds; the actual user manual is **18 pages**, with some existing
   typography/glossary/hyperlink warnings. No unresolved-reference build failure.
 - Staged TeX-tree install compiled a new native document from an unrelated

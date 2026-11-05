@@ -65,6 +65,15 @@ class Integration(unittest.TestCase):
         self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
         return result.stdout + result.stderr
 
+    def test_repository_examples(self):
+        shutil.copytree(ROOT / "data", self.work / "data")
+        shutil.copytree(ROOT / "templates", self.work / "templates")
+        for name, shell in [("test.tex", True), ("test-lua.tex", False)]:
+            with self.subTest(example=name):
+                self.write("case.tex", (ROOT / name).read_text())
+                self.compile(shell=shell)
+                self.assertTrue((self.work / "case.pdf").stat().st_size > 0)
+
     def test_native_cache_and_invalidation(self):
         self.document(r"\inputliquid{hello.liquid}\inputliquid{hello.liquid}",
                       "engine=lua,data=person.json,diagnostics")

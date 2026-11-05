@@ -705,6 +705,7 @@ Running "make install" installs the files in the local TeX tree.
   {\char_set_catcode_active:n {13} \peek_meaning:NTF [ {\__lqt_liquid_begin:w}{\__lqt_liquid_begin:w []}}
   {
     \end{VerbatimOut}
+    \char_set_catcode_end_line:n {13}
     \tl_set:Nn \l__lqt_action_tl {render}
     \__lqt_render:nn {\l__lqt_inline_tl}{\l__lqt_alias_tl}
   }
@@ -719,6 +720,7 @@ Running "make install" installs the files in the local TeX tree.
   {\char_set_catcode_active:n {13} \peek_meaning:NTF \c_group_begin_token {\__lqt_data_begin:n}{\__lqt_data_begin:n {default}}}
   {
     \end{VerbatimOut}
+    \char_set_catcode_end_line:n {13}
     \prop_gput:NVx \g__lqt_data_sources_prop \l__lqt_alias_tl
       {\file_full_name:V \l__lqt_inline_tl}
   }
