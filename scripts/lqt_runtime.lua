@@ -116,8 +116,25 @@ for _, filename in ipairs({"lqt_runtime.lua", "liquid_engine.lua", "json.lua", "
 end
 source_signature = hash(source_signature)
 
+local function resolve_input(path, auxiliary)
+  if not path or path == "" or lfs.attributes(path, "mode") == "file" then return path end
+  if auxiliary then
+    local candidate = join(auxiliary, path)
+    if lfs.attributes(candidate, "mode") == "file" then return candidate end
+  end
+  if kpse and kpse.find_file then
+    local ok, candidate = pcall(kpse.find_file, path, "tex")
+    if ok and candidate then return candidate end
+  end
+  return path
+end
+
 function M.process(opts)
   local started = os.clock()
+  opts.template_path = resolve_input(opts.template_path, opts.auxdir)
+  opts.data_path = resolve_input(opts.data_path, opts.auxdir)
+  for index, path in ipairs(opts.data_files or {}) do opts.data_files[index] = resolve_input(path, opts.auxdir) end
+  for name, path in pairs(opts.namespaces or {}) do opts.namespaces[name] = resolve_input(path, opts.auxdir) end
   local template = read(opts.template_path)
   if opts.action == "validate" then
     engine.validate(template, opts.template_path)

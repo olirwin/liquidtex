@@ -227,11 +227,21 @@ if pathlib.Path('fail-engine').exists():
 
     def test_auxiliary_output_directory(self):
         (self.work / "aux").mkdir()
-        self.document(r"\inputliquid{hello.liquid}")
+        self.document(r"""\inputliquid{hello.liquid}
+\liquidinline{Inline {{ name }}}
+\begin{liquiddata}{auxiliary}
+name: AuxiliaryData
+\end{liquiddata}
+\begin{liquid}[auxiliary]
+From {{ name }}.
+\end{liquid}
+""")
         self.compile(extra=("-output-directory=aux",))
         self.assertTrue((self.work / "aux/liquidtex-cache").is_dir())
         self.assertFalse((self.work / "liquidtex-cache").exists())
         self.assertIn("Hello Alice.", self.pdf("aux/case.pdf"))
+        self.assertIn("Inline Alice", self.pdf("aux/case.pdf"))
+        self.assertIn("From AuxiliaryData.", self.pdf("aux/case.pdf"))
 
     def test_latexmk_tracks_data_dependencies(self):
         self.document(r"\inputliquid{hello.liquid}")
